@@ -179,6 +179,20 @@ app.get('/api/expiring', requireAuth, (req, res) => {
   }
 });
 
+// Update status — shows when the medicine DB was last updated
+app.get('/api/update-status', requireAuth, (req, res) => {
+  try {
+    const logPath = path.join(__dirname, 'data', 'last-update.json');
+    if (!require('fs').existsSync(logPath)) {
+      return res.json({ last_update: null, total_added: 0, message: 'No update log found.' });
+    }
+    const log = require(logPath);
+    res.json(log);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // SPA catch-all
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

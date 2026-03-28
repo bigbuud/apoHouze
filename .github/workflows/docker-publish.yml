@@ -33,7 +33,6 @@ jobs:
           file: Dockerfile
           platforms: linux/amd64
           push: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           tags: |
             ghcr.io/bigbuud/apohouze:latest
             ghcr.io/bigbuud/apohouze:${{ github.sha }}

@@ -1,0 +1,78 @@
+name: 🔄 Update Medicine Databases
+
+on:
+  # Elke 4 maanden: 1 januari, 1 mei, 1 september om 03:00 UTC
+  schedule:
+    - cron: '0 3 1 1,5,9 *'
+  # Handmatig starten via Actions tab
+  workflow_dispatch:
+    inputs:
+      countries:
+        description: 'Landen om te updaten: "be", "nl", of "be nl" voor beide'
+        required: false
+        default: 'be nl'
+      dry_run:
+        description: 'Dry run (alleen preview, geen bestanden aanpassen)'
+        type: boolean
+        default: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Installeer dependencies
+        run: npm install
+
+      - name: Update medicijndatabases
+        run: |
+          COUNTRIES="${{ github.event.inputs.countries || 'be nl' }}"
+          DRY="${{ github.event.inputs.dry_run || 'false' }}"
+          if [ "$DRY" = "true" ]; then
+            node update.js $COUNTRIES --dry-run
+          else
+            node update.js $COUNTRIES
+          fi
+
+      - name: Controleer op wijzigingen
+        id: changes
+        run: |
+          if git diff --quiet data/countries/ data/last-update.json 2>/dev/null; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "total=0" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            TOTAL=$(node -e "try{const l=require('./data/last-update.json');const t=Object.values(l.results||{}).reduce((s,r)=>s+(r.added||0),0);console.log(t)}catch(e){console.log(0)}")
+            echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit & push bijgewerkte databases
+        if: steps.changes.outputs.changed == 'true' && github.event.inputs.dry_run != 'true'
+        run: |
+          git config user.name  "apoHouze Update Bot"
+          git config user.email "bot@apohouze.app"
+          git add data/countries/ data/last-update.json
+          git commit -m "🔄 Medicine update: +${{ steps.changes.outputs.total }} nieuwe medicijnen [automated]"
+          git push
+
+      - name: Trigger Docker rebuild
+        if: steps.changes.outputs.changed == 'true' && github.event.inputs.dry_run != 'true'
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: docker-publish.yml
+          token: ${{ secrets.CR_PAT }}
+
+      - name: Geen wijzigingen
+        if: steps.changes.outputs.changed != 'true'
+        run: echo "✅ Databases zijn al up-to-date."

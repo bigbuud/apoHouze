@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  apohouze:
+    image: ghcr.io/bigbuud/apohouze:latest
+    container_name: apohouze
+    restart: unless-stopped
+    ports:
+      - "3525:3000"
+    volumes:
+      - /volume1/docker/apohouze:/data
+    environment:
+      APP_USERNAME: admin
+      APP_PASSWORD: apohouze123
+      SESSION_SECRET: change-this-to-a-long-random-secret
+      DB_PATH: /data/apohouze.db
+      PORT: 3000
+      NODE_ENV: production
+      # Set your country code here:
+      # BE, NL, DE, FR, ES, IT, CH, AT, DK, PL, NO, FI, SE, GB, IE, PT, US, CA
+      COUNTRY: BE

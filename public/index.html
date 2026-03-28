@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#0D9488">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="apoHouze">
+  <meta name="description" content="Home medicine app inventory management">
+  <title>apoHouze</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent:       #0D9488;
+      --accent2:      #0F766E;
+      --accent-light: #14b8a6;
+      --accent-dim:   rgba(13,148,136,.09);
+      --accent-glow:  rgba(13,148,136,.18);
+      --blue:         #2D6BE4;
+      --blue-dim:     rgba(45,107,228,.08);
+      --bg:      #F5F7F6;
+      --bg2:     #FFFFFF;
+      --surface: #EEF2F0;
+      --surface2:#E3EAE7;
+      --border:  #DDE5E2;
+      --border2: #C8D5D1;
+      --red:        #E53E3E;
+      --red-dim:    rgba(229,62,62,.09);
+      --orange:     #ED8936;
+      --orange-dim: rgba(237,137,54,.09);
+      --yellow:     #D69E2E;
+      --yellow-dim: rgba(214,158,46,.09);
+      --green:      #38A169;
+      --green-dim:  rgba(56,161,105,.09);
+      --purple:     #805AD5;
+      --purple-dim: rgba(128,90,213,.09);
+      --text:  #1A2420;
+      --text2: #4A6560;
+      --text3: #8BAAA3;
+      --font-body:    'Outfit', sans-serif;
+      --font-display: 'Outfit', sans-serif;
+      --font-mono:    'Outfit', monospace;
+      --radius:    14px;
+      --radius-sm: 9px;
+      --radius-xs: 6px;
+      --shadow:    0 1px 4px rgba(0,0,0,.05), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-lg: 0 4px 20px rgba(0,0,0,.08);
+      --shadow-xl: 0 8px 36px rgba(0,0,0,.12);
+    }
+    *{ margin:0; padding:0; box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{ font-family:var(--font-body); background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+
+    /* LOGIN */
+    #login-page{
+      min-height:100vh; display:flex; align-items:center; justify-content:center;
+      background:linear-gradient(135deg,#e8f5f3 0%,#f0faf8 50%,#e8f0ee 100%);
+      position:relative; overflow:hidden;
+    }
+    #login-page::before{
+      content:''; position:absolute; inset:0;
+      background:radial-gradient(circle at 20% 80%,rgba(13,148,136,.12) 0%,transparent 50%),
+                 radial-gradient(circle at 80% 20%,rgba(45,107,228,.08) 0%,transparent 50%);
+      pointer-events:none;
+    }
+    .login-card{
+      background:rgba(255,255,255,.92); backdrop-filter:blur(16px);
+      border:1px solid rgba(255,255,255,.8); border-radius:24px;
+      padding:44px 40px; width:100%; max-width:420px;
+      box-shadow:var(--shadow-xl),0 0 0 1px rgba(13,148,136,.06); position:relative; z-index:1;
+    }
+    .login-brand{ display:flex; align-items:center; gap:14px; margin-bottom:32px; }
+    .login-brand-icon{ width:64px; height:64px; border-radius:16px; overflow:hidden; flex-shrink:0; box-shadow:0 4px 12px rgba(13,148,136,.25); }
+    .login-brand-icon img{ width:100%; height:100%; object-fit:cover; }
+    .login-brand-text h1{ font-size:22px; font-weight:800; color:var(--text); letter-spacing:-.4px; }
+    .login-brand-text p{ font-size:11px; color:var(--text3); letter-spacing:.8px; text-transform:uppercase; margin-top:2px; }
+    .login-welcome{ font-size:24px; font-weight:700; color:var(--text); margin-bottom:4px; }
+    .login-sub{ font-size:14px; color:var(--text2); margin-bottom:28px; }
+
+    /* FORMS */
+    .form-group{ margin-bottom:18px; }
+    .form-group label{ display:block; font-size:13px; font-weight:600; color:var(--text2); margin-bottom:7px; letter-spacing:.1px; }
+    .form-group input,.form-group select,.form-group textarea{
+      width:100%; padding:11px 14px; background:var(--bg); border:1.5px solid var(--border2);
+      border-radius:var(--radius-sm); color:var(--text); font-size:14px; font-family:var(--font-body);
+      outline:none; transition:border-color .15s,box-shadow .15s;
+    }
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{
+      border-color:var(--accent); background:#fff; box-shadow:0 0 0 3px var(--accent-dim);
+    }
+    .form-group textarea{ resize:vertical; min-height:80px; }
+    .error-msg{
+      background:var(--red-dim); border:1px solid rgba(229,62,62,.2); border-radius:var(--radius-sm);
+      padding:10px 14px; font-size:13px; color:var(--red); display:none; margin-bottom:12px;
+    }
+
+    /* BUTTONS */
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:7px;
+      padding:10px 18px; border:1.5px solid transparent; border-radius:var(--radius-sm);
+      font-size:13.5px; font-weight:600; font-family:var(--font-body);
+      cursor:pointer; transition:all .15s; text-decoration:none; white-space:nowrap;
+    }
+    .btn-primary{ background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 2px 8px rgba(13,148,136,.3); }
+    .btn-primary:hover{ background:var(--accent2); border-color:var(--accent2); box-shadow:0 4px 12px rgba(13,148,136,.4); }
+    .btn-ghost{ background:transparent; color:var(--text2); border-color:var(--border2); }
+    .btn-ghost:hover{ background:var(--surface); color:var(--text); }
+    .btn-danger{ background:transparent; color:var(--red); border-color:transparent; }
+    .btn-danger:hover{ background:var(--red-dim); border-color:rgba(229,62,62,.2); }
+    .btn-full{ width:100%; }
+    .btn-sm{ padding:6px 13px; font-size:12.5px; }
+
+    /* LAYOUT */
+    #app{ display:none; }
+    .sidebar{
+      position:fixed; left:0; top:0; bottom:0; width:248px;
+      background:#fff; border-right:1px solid var(--border);
+      display:flex; flex-direction:column; z-index:100;
+      transition:transform .25s ease; box-shadow:2px 0 16px rgba(0,0,0,.04);
+    }
+    .sidebar-logo{ display:flex; align-items:center; gap:12px; padding:22px 18px 18px; border-bottom:1px solid var(--border); }
+    .sidebar-logo-icon{ width:46px; height:46px; border-radius:12px; overflow:hidden; flex-shrink:0; box-shadow:0 2px 8px rgba(13,148,136,.2); }
+    .sidebar-logo-icon img{ width:100%; height:100%; object-fit:cover; }
+    .sidebar-logo-text h2{ font-size:15px; font-weight:800; color:var(--text); letter-spacing:-.3px; }
+    .sidebar-logo-text span{ font-size:11px; color:var(--text3); letter-spacing:.2px; }
+    .country-flag{ display:inline-block; width:20px; height:14px; vertical-align:middle; border-radius:2px; object-fit:cover; margin-right:4px; }
+    .sidebar-nav{ flex:1; padding:14px 10px; overflow-y:auto; }
+    .nav-section-label{ font-size:10px; font-weight:700; color:var(--text3); letter-spacing:1px; text-transform:uppercase; padding:8px 10px 5px; }
+    .nav-item{
+      display:flex; align-items:center; gap:10px; padding:10px 12px;
+      border-radius:var(--radius-sm); cursor:pointer; color:var(--text2);
+      font-size:13.5px; font-weight:500; transition:all .15s; margin-bottom:2px;
+    }
+    .nav-item:hover{ background:var(--surface); color:var(--text); }
+    .nav-item.active{ background:var(--accent-dim); color:var(--accent); font-weight:700; box-shadow:inset 3px 0 0 var(--accent); }
+    .nav-icon{ font-size:16px; }
+    .nav-badge{ margin-left:auto; background:var(--red); color:#fff; font-size:10px; font-weight:700; padding:2px 7px; border-radius:12px; }
+    .sidebar-footer{ padding:14px 10px; border-top:1px solid var(--border); }
+    .user-pill{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius-sm); background:var(--surface); margin-bottom:8px; }
+    .user-avatar{ width:32px; height:32px; background:var(--accent); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; }
+    .user-info h4{ font-size:13px; font-weight:700; color:var(--text); }
+    .user-info p{ font-size:11px; color:var(--text3); }
+
+    /* LANG SWITCHER — now lives in sidebar footer */
+    .lang-switcher{
+      display:flex; align-items:center; justify-content:center;
+      background:var(--surface); border:1.5px solid var(--border);
+      border-radius:100px; padding:3px; gap:2px; margin-bottom:8px;
+    }
+    .lang-btn{
+      padding:5px 11px; border-radius:100px; border:none; font-family:var(--font-body);
+      font-size:12px; font-weight:600; cursor:pointer; transition:all .15s;
+      background:transparent; color:var(--text3);
+    }
+    .lang-btn.active{ background:#fff; color:var(--accent); box-shadow:0 1px 4px rgba(0,0,0,.1); }
+    .lang-btn:hover:not(.active){ color:var(--text2); }
+
+    /* MAIN */
+    .main-content{ margin-left:248px; min-height:100vh; }
+    .topbar{
+      display:flex; align-items:center; gap:12px; padding:14px 24px;
+      background:#fff; border-bottom:1px solid var(--border);
+      position:sticky; top:0; z-index:50; box-shadow:0 2px 8px rgba(0,0,0,.04);
+    }
+    .topbar-title{ font-size:17px; font-weight:800; color:var(--text); min-width:120px; letter-spacing:-.3px; }
+    .topbar-search{
+      display:flex; align-items:center; gap:8px; background:var(--surface);
+      border:1.5px solid var(--border); border-radius:var(--radius-sm);
+      padding:8px 14px; flex:1; max-width:440px; margin:0 auto; transition:border-color .15s;
+    }
+    .topbar-search:focus-within{ border-color:var(--accent); }
+    .topbar-search input{ background:transparent; border:none; outline:none; font-size:13.5px; color:var(--text); width:100%; font-family:var(--font-body); }
+    .topbar-hamburger{ display:none; background:none; border:none; font-size:20px; cursor:pointer; color:var(--text2); padding:4px; }
+    .mobile-overlay{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:99; backdrop-filter:blur(2px); }
+    .mobile-overlay.show{ display:block; }
+
+    .page{ display:none; padding:28px; max-width:1200px; }
+    .page.active{ display:block; }
+    .page-lead{ color:var(--text3); font-size:13px; margin-bottom:24px; }
+
+    /* STATS */
+    .stats-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(175px,1fr)); gap:14px; margin-bottom:28px; }
+    .stat-card{
+      background:#fff; border:1px solid var(--border); border-radius:var(--radius);
+      padding:18px 16px; transition:box-shadow .15s,transform .15s; position:relative; overflow:hidden;
+    }
+    .stat-card::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:4px; border-radius:4px 0 0 4px; }
+    .stat-card:hover{ box-shadow:var(--shadow-lg); transform:translateY(-1px); }
+    .stat-card.total::before { background:var(--accent); }
+    .stat-card.expired::before{ background:var(--red); }
+    .stat-card.safe::before   { background:var(--green); }
+    .stat-card.rx::before     { background:var(--purple); }
+    .stat-card.cats::before   { background:var(--blue); }
+    .stat-card.total .stat-number  { color:var(--accent); }
+    .stat-card.expired .stat-number{ color:var(--red); }
+    .stat-card.safe .stat-number   { color:var(--green); }
+    .stat-card.rx .stat-number     { color:var(--purple); }
+    .stat-card.cats .stat-number   { color:var(--blue); }
+    .stat-icon{ font-size:22px; margin-bottom:10px; }
+    .stat-number{ font-size:34px; font-weight:800; letter-spacing:-1.5px; line-height:1; }
+    .stat-label{ font-size:13px; font-weight:700; color:var(--text); margin-top:5px; }
+    .stat-sublabel{ font-size:11px; color:var(--text3); margin-top:2px; }
+
+    /* SECTION */
+    .section-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+    .section-title{ font-size:15px; font-weight:700; color:var(--text); }
+    .section-badge{ font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; }
+    .badge-red   { background:var(--red-dim);   color:var(--red); }
+    .badge-orange{ background:var(--orange-dim); color:var(--orange); }
+    .badge-green { background:var(--green-dim);  color:var(--green); }
+
+    /* ALERTS */
+    .alert-list{ display:flex; flex-direction:column; gap:7px; }
+    .alert-item{
+      display:flex; align-items:center; gap:12px; padding:11px 16px;
+      border-radius:var(--radius-sm); background:var(--surface); border:1px solid var(--border);
+      cursor:pointer; transition:all .15s; font-size:13px;
+    }
+    .alert-item:hover{ background:var(--surface2); box-shadow:var(--shadow); }
+    .alert-item.expired{ background:rgba(229,62,62,.05); border-color:rgba(229,62,62,.2); }
+    .alert-item.warn30,.alert-item.warn90{ background:rgba(237,137,54,.05); border-color:rgba(237,137,54,.2); }
+    .alert-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; background:var(--border2); }
+    .alert-item.expired .alert-dot{ background:var(--red); }
+    .alert-item.warn30 .alert-dot,.alert-item.warn90 .alert-dot{ background:var(--orange); }
+    .alert-name{ font-weight:700; color:var(--text); }
+    .alert-info{ font-size:11px; color:var(--text3); }
+
+    /* EXPIRY */
+    .expiry-tag{ font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; white-space:nowrap; }
+    .expiry-expired{ background:var(--red-dim);    color:var(--red); }
+    .expiry-warn   { background:var(--orange-dim); color:var(--orange); }
+    .expiry-ok     { background:var(--green-dim);  color:var(--green); }
+    .expiry-none   { background:var(--surface2);   color:var(--text3); }
+
+    /* INVENTORY */
+    .inventory-toolbar{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+    .category-pills{ display:flex; gap:7px; flex-wrap:wrap; margin-bottom:18px; }
+    .cat-pill{ padding:6px 14px; border-radius:100px; font-size:12.5px; font-weight:600; background:var(--surface2); color:var(--text2); cursor:pointer; border:1.5px solid transparent; transition:all .15s; }
+    .cat-pill:hover{ border-color:var(--accent); color:var(--accent); }
+    .cat-pill.active{ background:var(--accent-dim); color:var(--accent); border-color:var(--accent); }
+
+    /* TABLE */
+    .table-wrap{ background:#fff; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); }
+    table{ width:100%; border-collapse:collapse; }
+    thead{ background:var(--surface); }
+    thead th{ padding:11px 15px; text-align:left; font-size:11px; font-weight:700; color:var(--text3); letter-spacing:.6px; text-transform:uppercase; border-bottom:1px solid var(--border); }
+    tbody tr{ border-bottom:1px solid var(--border); transition:background .1s; }
+    tbody tr:last-child{ border-bottom:none; }
+    tbody tr:hover{ background:var(--surface); }
+    tbody td{ padding:13px 15px; vertical-align:middle; font-size:13.5px; }
+    .med-name{ font-weight:700; color:var(--text); font-size:13.5px; }
+    .med-generic{ font-size:11px; color:var(--text3); margin-top:2px; }
+    .cat-tag{ font-size:11px; padding:3px 9px; border-radius:6px; background:var(--accent-dim); color:var(--accent); white-space:nowrap; font-weight:600; }
+    .rx-badge{ font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; background:var(--purple-dim); color:var(--purple); margin-left:6px; }
+
+    /* MODAL */
+    .modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:center; justify-content:center; z-index:200; padding:20px; backdrop-filter:blur(4px); }
+    .modal-overlay.active{ display:flex; }
+    .modal{ background:#fff; border-radius:20px; width:100%; max-width:600px; max-height:90vh; display:flex; flex-direction:column; box-shadow:var(--shadow-xl); overflow:hidden; }
+    .modal-header{ display:flex; align-items:center; justify-content:space-between; padding:20px 24px 16px; border-bottom:1px solid var(--border); flex-shrink:0; }
+    .modal-title{ font-size:17px; font-weight:800; color:var(--text); }
+    .modal-close{ background:var(--surface); border:none; color:var(--text2); width:32px; height:32px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; transition:all .15s; }
+    .modal-close:hover{ background:var(--red-dim); color:var(--red); }
+    .modal-body{ padding:20px 24px; overflow-y:auto; flex:1; }
+    .modal-footer{ display:flex; gap:10px; justify-content:flex-end; margin-top:24px; padding-top:18px; border-top:1px solid var(--border); }
+    .form-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .form-row.three{ grid-template-columns:1fr 1fr 1fr; }
+    .checkbox-group{ display:flex; align-items:center; gap:10px; margin-top:4px; font-size:14px; color:var(--text2); cursor:pointer; }
+    .checkbox-group input[type=checkbox]{ width:16px; height:16px; accent-color:var(--accent); cursor:pointer; }
+
+    /* CONFIRM */
+    .confirm-dialog{ background:#fff; border-radius:20px; padding:32px; max-width:360px; width:100%; text-align:center; box-shadow:var(--shadow-xl); }
+    .confirm-icon{ font-size:36px; margin-bottom:14px; }
+    .confirm-title{ font-size:18px; font-weight:800; color:var(--text); margin-bottom:8px; }
+    .confirm-msg{ font-size:14px; color:var(--text2); margin-bottom:24px; }
+    .confirm-btns{ display:flex; gap:10px; justify-content:center; }
+
+    /* TOAST */
+    .toast-container{ position:fixed; bottom:24px; right:24px; z-index:999; display:flex; flex-direction:column; gap:8px; }
+    .toast{ display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px 18px; font-size:13px; font-weight:500; box-shadow:var(--shadow-lg); animation:slideUp .25s ease; min-width:220px; }
+    .toast.success{ border-left:3px solid var(--green); }
+    .toast.error  { border-left:3px solid var(--red); }
+    .toast.warn   { border-left:3px solid var(--orange); }
+    @keyframes slideUp{ from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:translateY(0); } }
+
+    /* AUTOCOMPLETE */
+    .autocomplete-wrap{ position:relative; }
+    .autocomplete-dropdown{ position:fixed; z-index:9999; background:#fff; border:1.5px solid var(--accent); border-radius:var(--radius-sm); max-height:240px; overflow-y:auto; display:none; box-shadow:var(--shadow-xl); }
+    .autocomplete-dropdown.show{ display:block; }
+    .ac-item{ padding:10px 14px; cursor:pointer; border-bottom:1px solid var(--border); transition:background .1s; }
+    .ac-item:last-child{ border-bottom:none; }
+    .ac-item:hover,.ac-item.selected{ background:var(--accent-dim); }
+    .ac-name{ font-size:13px; font-weight:700; color:var(--text); }
+    .ac-sub{ font-size:11px; color:var(--text3); margin-top:2px; display:flex; gap:6px; flex-wrap:wrap; }
+    .ac-cat{ color:var(--accent); font-weight:600; }
+
+    /* LOADING */
+    .loading-spinner{ width:14px; height:14px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; display:inline-block; animation:spin .7s linear infinite; }
+    @keyframes spin{ to{ transform:rotate(360deg); } }
+    .skeleton{ background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%); background-size:200%; animation:shimmer 1.4s infinite; border-radius:var(--radius); }
+    @keyframes shimmer{ from{background-position:200%} to{background-position:-200%} }
+
+    /* CATEGORY CARDS */
+    .cat-overview-card{ background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:18px; cursor:pointer; transition:all .15s; }
+    .cat-overview-card:hover{ box-shadow:var(--shadow-lg); transform:translateY(-2px); border-color:var(--accent); }
+
+    /* RESPONSIVE */
+    @media(max-width:768px){
+      .sidebar{ transform:translateX(-100%); }
+      .sidebar.open{ transform:translateX(0); }
+      .mobile-overlay.show{ display:block; }
+      .main-content{ margin-left:0; }
+      .topbar{ padding:10px 14px; gap:8px; }
+      .topbar-hamburger{ display:flex; }
+      .topbar-title{ display:none; }
+      .topbar-search{ max-width:100%; }
+      .page{ padding:16px; }
+      .stats-grid{ grid-template-columns:repeat(2,1fr); }
+      .form-row,.form-row.three{ grid-template-columns:1fr; }
+      table{ font-size:12px; }
+      thead th:nth-child(3),thead th:nth-child(5),tbody td:nth-child(3),tbody td:nth-child(5){ display:none; }
+    }
+    ::-webkit-scrollbar{ width:5px; }
+    ::-webkit-scrollbar-track{ background:transparent; }
+    ::-webkit-scrollbar-thumb{ background:var(--border2); border-radius:3px; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-page">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-brand-icon"><img src="/icons/logo.png" alt="apoHouze logo"></div>
+      <div class="login-brand-text">
+        <h1>apoHouze</h1>
+        <p data-i18n="appTagline">Home Medicine App</p>
+      </div>
+    </div>
+    <h2 class="login-welcome" data-i18n="welcomeBack">Welcome back</h2>
+    <p class="login-sub" data-i18n="loginSub">Sign in to manage your home medicine app</p>
+    <div class="form-group">
+      <label data-i18n="username">Username</label>
+      <input type="text" id="login-user" placeholder="username" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label data-i18n="password">Password</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div class="error-msg" id="login-error" data-i18n="invalidCredentials">Invalid username or password</div>
+    <div style="margin-top:22px">
+      <button class="btn btn-primary btn-full" id="login-btn">
+        <span data-i18n="signIn">Sign in</span> <span>→</span>
+      </button>
+    </div>
+    <p style="text-align:center;margin-top:18px;font-size:12px;color:var(--text3)" id="login-footer">apoHouze · Multi-country database</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="mobile-overlay" id="mobile-overlay"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon"><img src="/icons/logo.png" alt="apoHouze logo"></div>
+      <div class="sidebar-logo-text">
+        <h2>apoHouze</h2>
+        <span id="sidebar-country-label" data-i18n="homeCabinet">HOME CABINET</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label" data-i18n="navOverview">Overview</div>
+      <div class="nav-item active" data-page="dashboard"><span class="nav-icon">📊</span> <span data-i18n="navDashboard">Dashboard</span></div>
+      <div class="nav-item" data-page="inventory"><span class="nav-icon">🗂️</span> <span data-i18n="navInventory">Inventory</span><span class="nav-badge" id="nav-total" style="display:none"></span></div>
+      <div class="nav-item" data-page="expiring"><span class="nav-icon">⚠️</span> <span data-i18n="navExpiry">Expiry alerts</span><span class="nav-badge" id="nav-expiry" style="display:none"></span></div>
+      <div class="nav-section-label" style="margin-top:12px" data-i18n="navManage">Manage</div>
+      <div class="nav-item" data-page="categories"><span class="nav-icon">📋</span> <span data-i18n="navCategories">Categories</span></div>
+      <div class="nav-item" data-page="add"><span class="nav-icon">➕</span> <span data-i18n="navAdd">Add medicine</span></div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" id="user-avatar">A</div>
+        <div class="user-info">
+          <h4 id="username-display">Admin</h4>
+          <p data-i18n="administrator">Administrator</p>
+        </div>
+      </div>
+      <!-- Language switcher lives here — visible on all screen sizes -->
+      <div class="lang-switcher" id="lang-switcher">
+        <button class="lang-btn active" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" onclick="setLang('nl')">NL</button>
+        <button class="lang-btn" onclick="setLang('fr')">FR</button>
+      </div>
+      <button class="btn btn-ghost btn-full btn-sm" id="logout-btn">🚪 <span data-i18n="signOut">Sign out</span></button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="topbar">
+      <button class="topbar-hamburger" id="hamburger">☰</button>
+      <h1 class="topbar-title" id="topbar-title" data-i18n="navDashboard">Dashboard</h1>
+      <div class="topbar-search">
+        <span style="color:var(--text3);font-size:14px">🔍</span>
+        <input type="text" id="global-search" data-i18n-placeholder="searchPlaceholder" placeholder="Search medicines...">
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openAddModal()">+ <span data-i18n="addShort">Add</span></button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card total skeleton" style="height:120px"></div>
+        <div class="stat-card expired skeleton" style="height:120px"></div>
+        <div class="stat-card safe skeleton" style="height:120px"></div>
+      </div>
+      <div class="section-header">
+        <h3 class="section-title">⚠️ <span data-i18n="expiredExpiring">Expired &amp; Expiring soon</span></h3>
+        <button class="btn btn-ghost btn-sm" onclick="navigateTo('expiring')" data-i18n="viewAll">View all →</button>
+      </div>
+      <div class="alert-list" id="alert-list"><div style="color:var(--text3);font-size:13px;padding:16px" data-i18n="loading">Loading...</div></div>
+      <div style="height:32px"></div>
+      <div class="section-header">
+        <h3 class="section-title">📊 <span data-i18n="byCategory">By category</span></h3>
+      </div>
+      <div id="cat-overview" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px"></div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div class="page" id="page-inventory">
+      <div class="inventory-toolbar">
+        <input type="text" id="inv-search" data-i18n-placeholder="searchInventory" placeholder="🔍 Search by name, category..."
+          style="flex:1;min-width:200px;padding:10px 14px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13.5px;font-family:var(--font-body);outline:none;transition:border-color .15s"
+          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        <select id="inv-sort" style="padding:10px 14px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:var(--font-body);outline:none;">
+          <option value="expiry" data-i18n="sortExpiry">Sort: Expiry date</option>
+          <option value="name" data-i18n="sortName">Sort: Name</option>
+          <option value="category" data-i18n="sortCategory">Sort: Category</option>
+        </select>
+        <label class="checkbox-group">
+          <input type="checkbox" id="inv-rx"> <span style="font-size:13px;color:var(--text2)" data-i18n="rxOnly">Rx only</span>
+        </label>
+      </div>
+      <div class="category-pills" id="inv-cat-pills"><div class="cat-pill active" data-cat="" data-i18n="all">All</div></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th data-i18n="medicine">Medicine</th>
+            <th data-i18n="category">Category</th>
+            <th data-i18n="quantity">Quantity</th>
+            <th data-i18n="expiryDate">Expiry date</th>
+            <th data-i18n="location">Location</th>
+            <th style="width:100px"></th>
+          </tr></thead>
+          <tbody id="inventory-tbody"><tr><td colspan="6" style="padding:40px;text-align:center;color:var(--text3)" data-i18n="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+      <p id="inv-count" style="font-size:12px;color:var(--text3);margin-top:10px"></p>
+    </div>
+
+    <!-- EXPIRING -->
+    <div class="page" id="page-expiring">
+      <p class="page-lead" data-i18n="expiryPageLead">Medicines that have expired or are expiring soon</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th data-i18n="medicine">Medicine</th>
+            <th data-i18n="category">Category</th>
+            <th data-i18n="expiryDate">Expiry date</th>
+            <th data-i18n="status">Status</th>
+            <th data-i18n="quantity">Quantity</th>
+            <th style="width:80px"></th>
+          </tr></thead>
+          <tbody id="expiry-tbody"><tr><td colspan="6" style="padding:40px;text-align:center;color:var(--text3)" data-i18n="loading">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CATEGORIES -->
+    <div class="page" id="page-categories">
+      <p class="page-lead" data-i18n="categoriesLead">Overview by category</p>
+      <div id="cat-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px"></div>
+    </div>
+
+    <!-- ADD -->
+    <div class="page" id="page-add">
+      <p class="page-lead" data-i18n="addLead">Add a new medicine to your inventory</p>
+      <div style="max-width:600px"><div id="quick-add-form"></div></div>
+    </div>
+  </main>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modal-title" data-i18n="addMedicine">Add medicine</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id">
+      <div class="form-group autocomplete-wrap">
+        <label data-i18n="medicineName">Medicine name *</label>
+        <input type="text" id="med-name" data-i18n-placeholder="startTyping" placeholder="Start typing..." autocomplete="off">
+        <div class="autocomplete-dropdown" id="ac-dropdown"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label><span data-i18n="genericName">Generic name</span> <span style="font-size:11px;color:var(--text3);font-weight:400;margin-left:6px" data-i18n="genericHint">— type to search brands</span></label>
+          <div style="display:flex;gap:6px;align-items:flex-start">
+            <div style="flex:1;position:relative">
+              <input type="text" id="med-generic" data-i18n-placeholder="genericPlaceholder" placeholder="e.g. Paracetamol, Ibuprofen..." autocomplete="off"
+                style="width:100%;padding:10px 12px;background:var(--bg);border:1.5px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:var(--font-body);outline:none;">
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="searchByGeneric()" style="white-space:nowrap;height:40px;flex-shrink:0">🔍 <span data-i18n="brands">Brands</span></button>
+          </div>
+          <div id="generic-results" style="display:none;margin-top:8px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);background:#fff;max-height:220px;overflow-y:auto;box-shadow:var(--shadow-lg)"></div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="form">Form</label>
+          <select id="med-form"></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="category">Category *</label>
+        <select id="med-category"><option value="" data-i18n="selectCategory">Select category...</option></select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="quantity">Quantity</label>
+          <input type="number" id="med-qty" min="0" value="1" placeholder="1">
+        </div>
+        <div class="form-group">
+          <label data-i18n="unit">Unit</label>
+          <select id="med-unit">
+            <option value="units" data-i18n="units">units</option>
+            <option value="tablets" data-i18n="tablets">tablets</option>
+            <option value="capsules" data-i18n="capsules">capsules</option>
+            <option value="ml">ml</option>
+            <option value="g" data-i18n="grams">grams</option>
+            <option value="boxes" data-i18n="boxes">boxes</option>
+            <option value="strips" data-i18n="strips">strips</option>
+            <option value="ampoules" data-i18n="ampoules">ampoules</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label data-i18n="expiryDate">Expiry date</label>
+          <input type="month" id="med-expiry">
+        </div>
+        <div class="form-group">
+          <label data-i18n="location">Location</label>
+          <select id="med-location">
+            <option value="Medicine cabinet" data-i18n="locMedicineCabinet">Medicine cabinet</option>
+            <option value="Bathroom" data-i18n="locBathroom">Bathroom</option>
+            <option value="Kitchen" data-i18n="locKitchen">Kitchen</option>
+            <option value="Bedroom" data-i18n="locBedroom">Bedroom</option>
+            <option value="Refrigerator" data-i18n="locRefrigerator">Refrigerator</option>
+            <option value="First aid kit" data-i18n="locFirstAid">First aid kit</option>
+            <option value="Travel kit" data-i18n="locTravel">Travel kit</option>
+            <option value="Other" data-i18n="other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label data-i18n="notes">Notes</label>
+        <textarea id="med-notes" data-i18n-placeholder="notesPlaceholder" placeholder="Dosage, remarks..."></textarea>
+      </div>
+      <div class="checkbox-group">
+        <input type="checkbox" id="med-rx">
+        <label for="med-rx" data-i18n="prescriptionRx">Prescription medicine (Rx) 🩺</label>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal()" data-i18n="cancel">Cancel</button>
+        <button class="btn btn-primary" onclick="saveItem()"><span id="save-btn-text" data-i18n="save">Save</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM -->
+<div class="modal-overlay" id="confirm-overlay">
+  <div class="confirm-dialog">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-title" data-i18n="deleteTitle">Delete?</div>
+    <div class="confirm-msg" id="confirm-msg"></div>
+    <div class="confirm-btns">
+      <button class="btn btn-ghost" onclick="closeConfirm()" data-i18n="cancel">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok" data-i18n="delete">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ==================== TRANSLATIONS ====================
+const TRANSLATIONS = {
+  en:{
+    appTagline:'Home Medicine App',
+    welcomeBack:'Welcome back',loginSub:'Sign in to manage your home medicine app',
+    username:'Username',password:'Password',invalidCredentials:'Invalid username or password',
+    signIn:'Sign in',signOut:'Sign out',administrator:'Administrator',
+    homeCabinet:'HOME CABINET',
+    navOverview:'Overview',navDashboard:'Dashboard',navInventory:'Inventory',
+    navExpiry:'Expiry alerts',navManage:'Manage',navCategories:'Categories',
+    navAdd:'Add medicine',addShort:'Add',
+    searchPlaceholder:'Search medicines...',searchInventory:'🔍 Search by name, category...',
+    expiredExpiring:'Expired & Expiring soon',viewAll:'View all →',
+    byCategory:'By category',loading:'Loading...',
+    medicine:'Medicine',category:'Category',quantity:'Quantity',
+    expiryDate:'Expiry date',location:'Location',status:'Status',
+    expiryPageLead:'Medicines that have expired or are expiring soon',
+    categoriesLead:'Overview by category',addLead:'Add a new medicine to your inventory',
+    addMedicine:'Add medicine',editMedicine:'Edit medicine',
+    medicineName:'Medicine name *',startTyping:'Start typing...',
+    genericName:'Generic name',genericHint:'— type to search brands',
+    genericPlaceholder:'e.g. Paracetamol, Ibuprofen...',
+    brands:'Brands',form:'Form',select:'Select...',selectCategory:'Select category...',unit:'Unit',
+    notes:'Notes',notesPlaceholder:'Dosage, remarks...',prescriptionRx:'Prescription medicine (Rx) 🩺',
+    cancel:'Cancel',save:'Save',delete:'Delete',deleteTitle:'Delete?',
+    deleteConfirm:'Remove from inventory',
+    sortExpiry:'Sort: Expiry date',sortName:'Sort: Name',sortCategory:'Sort: Category',
+    rxOnly:'Rx only',all:'All',
+    units:'units',tablets:'tablets',capsules:'capsules',grams:'grams',boxes:'boxes',strips:'strips',ampoules:'ampoules',
+    locMedicineCabinet:'Medicine cabinet',locBathroom:'Bathroom',locKitchen:'Kitchen',
+    locBedroom:'Bedroom',locRefrigerator:'Refrigerator',locFirstAid:'First aid kit',locTravel:'Travel kit',other:'Other',
+    medicineUpdated:'Medicine updated',medicineAdded:'Medicine added',medicineDeleted:'Medicine deleted',
+    medicineSelected:'Medicine selected',connectionError:'Connection error',
+    nameAndCategoryRequired:'Name and category are required',
+    errorSaving:'Error saving',errorDeleting:'Error deleting',
+    typeIngredient:'Type an active ingredient first',
+    noMedicines:'No medicines added yet',allGood:'✅ All good! No expiring medicines.',
+    removeImmediately:'remove immediately',totalInventory:'total in inventory',
+    notExpired:'not expired',rxMedicines:'Rx medicines',inUse:'in use',
+    medicines:'Medicines',expired:'Expired',valid:'Valid',prescription:'Prescription',
+    categories:'Categories',medicinesInDb:'medicines in database',
+    addMedicineBtn:'➕ Add medicine',addMedicineLead:'Use the form to add a new medicine to your inventory.',
+    noDate:'No date',brandsFound:'brands found for',clickToSelect:'— click to select',
+    noBrandsFound:'No brands found for this active ingredient.',searchError:'Search error.',
+    expiryExpired:'⚠️ Expired',expiry30:'< 30 days',expiry90:'< 90 days',expiryOk:'✓ OK',
+  },
+  nl:{
+    appTagline:'Thuisapotheek App',
+    welcomeBack:'Welkom terug',loginSub:'Log in om je apoHouze te beheren',
+    username:'Gebruikersnaam',password:'Wachtwoord',invalidCredentials:'Ongeldige gebruikersnaam of wachtwoord',
+    signIn:'Inloggen',signOut:'Uitloggen',administrator:'Beheerder',
+    homeCabinet:'MEDICIJNKAST',
+    navOverview:'Overzicht',navDashboard:'Dashboard',navInventory:'Inventaris',
+    navExpiry:'Verloopalerts',navManage:'Beheren',navCategories:'Categorieën',
+    navAdd:'Medicijn toevoegen',addShort:'Toevoegen',
+    searchPlaceholder:'Medicijnen zoeken...',searchInventory:'🔍 Zoek op naam, categorie...',
+    expiredExpiring:'Verlopen & Bijna verlopen',viewAll:'Alles bekijken →',
+    byCategory:'Per categorie',loading:'Laden...',
+    medicine:'Medicijn',category:'Categorie',quantity:'Hoeveelheid',
+    expiryDate:'Vervaldatum',location:'Locatie',status:'Status',
+    expiryPageLead:'Medicijnen die verlopen zijn of binnenkort verlopen',
+    categoriesLead:'Overzicht per categorie',addLead:'Voeg een nieuw medicijn toe aan je inventaris',
+    addMedicine:'Medicijn toevoegen',editMedicine:'Medicijn bewerken',
+    medicineName:'Medicijnnaam *',startTyping:'Begin met typen...',
+    genericName:'Generieke naam',genericHint:'— typ om merken te zoeken',
+    genericPlaceholder:'bijv. Paracetamol, Ibuprofen...',
+    brands:'Merken',form:'Vorm',select:'Selecteer...',selectCategory:'Selecteer categorie...',unit:'Eenheid',
+    notes:'Notities',notesPlaceholder:'Dosering, opmerkingen...',prescriptionRx:'Receptplichtig medicijn (Rx) 🩺',
+    cancel:'Annuleren',save:'Opslaan',delete:'Verwijderen',deleteTitle:'Verwijderen?',
+    deleteConfirm:'Verwijder uit inventaris',
+    sortExpiry:'Sorteren: Vervaldatum',sortName:'Sorteren: Naam',sortCategory:'Sorteren: Categorie',
+    rxOnly:'Alleen Rx',all:'Alle',
+    units:'eenheden',tablets:'tabletten',capsules:'capsules',grams:'gram',boxes:'dozen',strips:'strips',ampoules:'ampullen',
+    locMedicineCabinet:'Medicijnkastje',locBathroom:'Badkamer',locKitchen:'Keuken',
+    locBedroom:'Slaapkamer',locRefrigerator:'Koelkast',locFirstAid:'EHBO-kit',locTravel:'Reiskit',other:'Anders',
+    medicineUpdated:'Medicijn bijgewerkt',medicineAdded:'Medicijn toegevoegd',medicineDeleted:'Medicijn verwijderd',
+    medicineSelected:'Medicijn geselecteerd',connectionError:'Verbindingsfout',
+    nameAndCategoryRequired:'Naam en categorie zijn verplicht',
+    errorSaving:'Fout bij opslaan',errorDeleting:'Fout bij verwijderen',
+    typeIngredient:'Typ eerst een werkzame stof',
+    noMedicines:'Nog geen medicijnen toegevoegd',allGood:'✅ Alles goed! Geen medicijnen verlopen.',
+    removeImmediately:'direct verwijderen',totalInventory:'totaal in inventaris',
+    notExpired:'niet verlopen',rxMedicines:'Rx medicijnen',inUse:'in gebruik',
+    medicines:'Medicijnen',expired:'Verlopen',valid:'Geldig',prescription:'Recept',
+    categories:'Categorieën',medicinesInDb:'medicijnen in database',
+    addMedicineBtn:'➕ Medicijn toevoegen',addMedicineLead:'Gebruik het formulier om een nieuw medicijn toe te voegen.',
+    noDate:'Geen datum',brandsFound:'merken gevonden voor',clickToSelect:'— klik om te selecteren',
+    noBrandsFound:'Geen merken gevonden voor dit werkzame stof.',searchError:'Zoekfout.',
+    expiryExpired:'⚠️ Verlopen',expiry30:'< 30 dagen',expiry90:'< 90 dagen',expiryOk:'✓ OK',
+  },
+  fr:{
+    appTagline:'Application Pharmacie Maison',
+    welcomeBack:'Bon retour',loginSub:"Connectez-vous pour gérer votre apoHouze",
+    username:"Nom d'utilisateur",password:'Mot de passe',invalidCredentials:"Nom d'utilisateur ou mot de passe invalide",
+    signIn:'Se connecter',signOut:'Se déconnecter',administrator:'Administrateur',
+    homeCabinet:'ARMOIRE À PHARMACIE',
+    navOverview:'Aperçu',navDashboard:'Tableau de bord',navInventory:'Inventaire',
+    navExpiry:'Alertes expiration',navManage:'Gérer',navCategories:'Catégories',
+    navAdd:'Ajouter médicament',addShort:'Ajouter',
+    searchPlaceholder:'Rechercher médicaments...',searchInventory:'🔍 Rechercher par nom, catégorie...',
+    expiredExpiring:'Expirés & Bientôt expirés',viewAll:'Voir tout →',
+    byCategory:'Par catégorie',loading:'Chargement...',
+    medicine:'Médicament',category:'Catégorie',quantity:'Quantité',
+    expiryDate:"Date d'expiration",location:'Emplacement',status:'Statut',
+    expiryPageLead:"Médicaments expirés ou dont la date d'expiration approche",
+    categoriesLead:'Aperçu par catégorie',addLead:'Ajouter un nouveau médicament à votre inventaire',
+    addMedicine:'Ajouter médicament',editMedicine:'Modifier médicament',
+    medicineName:'Nom du médicament *',startTyping:'Commencez à taper...',
+    genericName:'Nom générique',genericHint:'— tapez pour chercher des marques',
+    genericPlaceholder:'ex. Paracétamol, Ibuprofène...',
+    brands:'Marques',form:'Forme',select:'Sélectionner...',selectCategory:'Sélectionner une catégorie...',unit:'Unité',
+    notes:'Notes',notesPlaceholder:'Posologie, remarques...',prescriptionRx:'Médicament sur ordonnance (Rx) 🩺',
+    cancel:'Annuler',save:'Enregistrer',delete:'Supprimer',deleteTitle:'Supprimer?',
+    deleteConfirm:"Supprimer de l'inventaire",
+    sortExpiry:"Trier: Date d'expiration",sortName:'Trier: Nom',sortCategory:'Trier: Catégorie',
+    rxOnly:'Rx seulement',all:'Tous',
+    units:'unités',tablets:'comprimés',capsules:'gélules',grams:'grammes',boxes:'boîtes',strips:'plaquettes',ampoules:'ampoules',
+    locMedicineCabinet:'Armoire à pharmacie',locBathroom:'Salle de bain',locKitchen:'Cuisine',
+    locBedroom:'Chambre',locRefrigerator:'Réfrigérateur',locFirstAid:'Trousse de secours',locTravel:'Trousse de voyage',other:'Autre',
+    medicineUpdated:'Médicament mis à jour',medicineAdded:'Médicament ajouté',medicineDeleted:'Médicament supprimé',
+    medicineSelected:'Médicament sélectionné',connectionError:'Erreur de connexion',
+    nameAndCategoryRequired:'Le nom et la catégorie sont requis',
+    errorSaving:'Erreur lors de la sauvegarde',errorDeleting:'Erreur lors de la suppression',
+    typeIngredient:"Saisissez d'abord un principe actif",
+    noMedicines:'Aucun médicament ajouté',allGood:'✅ Tout va bien ! Aucun médicament ne va expirer.',
+    removeImmediately:'à retirer immédiatement',totalInventory:'total en inventaire',
+    notExpired:'non expiré',rxMedicines:'médicaments Rx',inUse:'en usage',
+    medicines:'Médicaments',expired:'Expirés',valid:'Valides',prescription:'Ordonnance',
+    categories:'Catégories',medicinesInDb:'médicaments en base de données',
+    addMedicineBtn:'➕ Ajouter médicament',addMedicineLead:'Utilisez le formulaire pour ajouter un nouveau médicament.',
+    noDate:'Sans date',brandsFound:'marques trouvées pour',clickToSelect:'— cliquez pour sélectionner',
+    noBrandsFound:'Aucune marque trouvée pour ce principe actif.',searchError:'Erreur de recherche.',
+    expiryExpired:'⚠️ Expiré',expiry30:'< 30 jours',expiry90:'< 90 jours',expiryOk:'✓ OK',
+  }
+};
+
+let currentLang = 'en';
+function t(key){ return (TRANSLATIONS[currentLang]&&TRANSLATIONS[currentLang][key])||TRANSLATIONS.en[key]||key; }
+
+function setLang(lang){
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.textContent.toLowerCase()===lang);
+  });
+  applyTranslations();
+  renderFormSelect();
+  const titles={dashboard:t('navDashboard'),inventory:t('navInventory'),expiring:t('navExpiry'),categories:t('navCategories'),add:t('navAdd')};
+  document.getElementById('topbar-title').textContent = titles[currentPage]||currentPage;
+  // Re-render dynamic content with new language
+  if(lastStats) renderStats(lastStats);
+  if(lastAlerts!==null) renderAlerts(lastAlerts, lastAlertsToday);
+  if(inventoryData.length) { renderInventory(); renderCategoryPills(); }
+  if(currentPage==='categories') renderCategoryPage();
+  if(currentPage==='add') renderAddPage();
+}
+
+function applyTranslations(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent=t(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{ el.placeholder=t(el.getAttribute('data-i18n-placeholder')); });
+}
+
+// ==================== STATE ====================
+let currentPage='dashboard';
+let inventoryData=[];
+let categories=[];
+let activeCategory='';
+let currentEditId=null;
+let confirmCallback=null;
+let acTimeout=null;
+let acSelectedIndex=-1;
+
+const CAT_ICONS={'Pain & Fever':'🌡️','Allergy':'🌸','Stomach & Intestine':'🫃','Skin & Wounds':'🩹','Cough & Cold':'🤧','Eye & Ear':'👁️','Vitamins & Supplements':'💊','Sleep & Sedation':'😴','Heart & Blood Pressure':'❤️','Antibiotics':'🦠','Diabetes':'🍬','Thyroid':'⚡','Joints & Muscles':'💪',"Women's Health":'♀️','Lungs & Asthma':'🫁','Migraine':'🤕','Neurology':'🧠','Cholesterol':'🩸','Antidepressants':'🧠','Smoking Cessation':'🚭','First Aid':'🏥','Urology':'🫘','Corticosteroids':'💊','Antiparasitics':'🪲','Antifungals':'🍄','Antivirals':'🦠','Anticoagulants':'💉','Oral Care':'🦷','Nervous System':'🧠','Cardiovascular':'❤️','Respiratory':'🫁','Dermatology':'🩹','Ophthalmology':'👁️','Psychiatry':'🧠','Oncology':'⚕️'};
+
+const CAT_TRANSLATIONS={
+  'Pain & Fever':          {nl:'Pijn & Koorts',          fr:'Douleur & Fièvre'},
+  'Allergy':               {nl:'Allergie',                fr:'Allergie'},
+  'Stomach & Intestine':   {nl:'Maag & Darmen',           fr:'Estomac & Intestin'},
+  'Skin & Wounds':         {nl:'Huid & Wonden',           fr:'Peau & Plaies'},
+  'Cough & Cold':          {nl:'Hoest & Verkoudheid',     fr:'Toux & Rhume'},
+  'Eye & Ear':             {nl:'Oog & Oor',               fr:'Yeux & Oreilles'},
+  'Vitamins & Supplements':{nl:'Vitamines & Supplementen',fr:'Vitamines & Compléments'},
+  'Sleep & Sedation':      {nl:'Slaap & Sedatie',         fr:'Sommeil & Sédation'},
+  'Heart & Blood Pressure':{nl:'Hart & Bloeddruk',        fr:'Cœur & Tension'},
+  'Antibiotics':           {nl:'Antibiotica',             fr:'Antibiotiques'},
+  'Diabetes':              {nl:'Diabetes',                fr:'Diabète'},
+  'Thyroid':               {nl:'Schildklier',             fr:'Thyroïde'},
+  'Joints & Muscles':      {nl:'Gewrichten & Spieren',    fr:'Articulations & Muscles'},
+  "Women's Health":        {nl:"Vrouwengezondheid",       fr:'Santé féminine'},
+  'Lungs & Asthma':        {nl:'Longen & Astma',          fr:'Poumons & Asthme'},
+  'Migraine':              {nl:'Migraine',                fr:'Migraine'},
+  'Neurology':             {nl:'Neurologie',              fr:'Neurologie'},
+  'Cholesterol':           {nl:'Cholesterol',             fr:'Cholestérol'},
+  'Antidepressants':       {nl:'Antidepressiva',          fr:'Antidépresseurs'},
+  'Smoking Cessation':     {nl:'Stoppen met roken',       fr:'Sevrage tabagique'},
+  'First Aid':             {nl:'Eerste Hulp',             fr:'Premiers Secours'},
+  'Urology':               {nl:'Urologie',                fr:'Urologie'},
+  'Corticosteroids':       {nl:'Corticosteroïden',        fr:'Corticostéroïdes'},
+  'Antiparasitics':        {nl:'Antiparasitica',          fr:'Antiparasitaires'},
+  'Antifungals':           {nl:'Antimycotica',            fr:'Antifongiques'},
+  'Antivirals':            {nl:'Antivirale middelen',     fr:'Antiviraux'},
+  'Anticoagulants':        {nl:'Bloedverdunners',         fr:'Anticoagulants'},
+  'Oral Care':             {nl:'Mondverzorging',          fr:'Soins buccaux'},
+  'Nervous System':        {nl:'Zenuwstelsel',            fr:'Système nerveux'},
+  'Cardiovascular':        {nl:'Cardiovasculair',         fr:'Cardiovasculaire'},
+  'Respiratory':           {nl:'Ademhalingsstelsel',      fr:'Respiratoire'},
+  'Dermatology':           {nl:'Dermatologie',            fr:'Dermatologie'},
+  'Ophthalmology':         {nl:'Oogheelkunde',            fr:'Ophtalmologie'},
+  'Psychiatry':            {nl:'Psychiatrie',             fr:'Psychiatrie'},
+  'Oncology':              {nl:'Oncologie',               fr:'Oncologie'},
+};
+
+const FORM_TRANSLATIONS={
+  'Tablet':              {nl:'Tablet',              fr:'Comprimé'},
+  'Capsule':             {nl:'Capsule',             fr:'Gélule'},
+  'Effervescent tablet': {nl:'Bruistablet',         fr:'Comprimé effervescent'},
+  'Dispersible tablet':  {nl:'Dispergeerbare tablet',fr:'Comprimé dispersible'},
+  'Syrup':               {nl:'Siroop',              fr:'Sirop'},
+  'Drops':               {nl:'Druppels',            fr:'Gouttes'},
+  'Inhaler':             {nl:'Inhalator',           fr:'Inhalateur'},
+  'Nasal spray':         {nl:'Neusdruppels',        fr:'Spray nasal'},
+  'Eye drops':           {nl:'Oogdruppels',         fr:'Collyre'},
+  'Ear drops':           {nl:'Oordruppels',         fr:'Gouttes auriculaires'},
+  'Cream':               {nl:'Crème',               fr:'Crème'},
+  'Ointment':            {nl:'Zalf',                fr:'Pommade'},
+  'Gel':                 {nl:'Gel',                 fr:'Gel'},
+  'Patch':               {nl:'Pleister',            fr:'Patch'},
+  'Spray':               {nl:'Spray',               fr:'Spray'},
+  'Injection':           {nl:'Injectie',            fr:'Injection'},
+  'Suppository':         {nl:'Zetpil',              fr:'Suppositoire'},
+  'Powder':              {nl:'Poeder',              fr:'Poudre'},
+  'Suspension':          {nl:'Suspensie',           fr:'Suspension'},
+  'Solution':            {nl:'Oplossing',           fr:'Solution'},
+  'Mouthwash':           {nl:'Mondwater',           fr:'Bain de bouche'},
+  'Chewing gum':         {nl:'Kauwgom',             fr:'Gomme à mâcher'},
+  'Lozenge':             {nl:'Zuigtablet',          fr:'Pastille'},
+  'Enema':               {nl:'Klysma',              fr:'Lavement'},
+  'Ampoule':             {nl:'Ampul',               fr:'Ampoule'},
+};
+
+function translateCat(cat){
+  if(currentLang==='en'||!cat)return cat;
+  return (CAT_TRANSLATIONS[cat]&&CAT_TRANSLATIONS[cat][currentLang])||cat;
+}
+function translateForm(form){
+  if(currentLang==='en'||!form)return form;
+  return (FORM_TRANSLATIONS[form]&&FORM_TRANSLATIONS[form][currentLang])||form;
+}
+function renderFormSelect(){
+  const sel=document.getElementById('med-form');
+  if(!sel)return;
+  const current=sel.value;
+  const forms=['Tablet','Capsule','Effervescent tablet','Dispersible tablet','Syrup','Drops','Inhaler','Nasal spray','Eye drops','Ear drops','Cream','Ointment','Gel','Patch','Spray','Injection','Suppository','Powder','Suspension','Solution','Mouthwash','Chewing gum','Lozenge','Enema','Ampoule'];
+  sel.innerHTML=`<option value="">${t('select')}</option>`+forms.map(f=>`<option value="${f}">${translateForm(f)}</option>`).join('');
+  if(current)sel.value=current;
+}
+
+const COUNTRY_CODES={BE:'be',NL:'nl',DE:'de',FR:'fr',ES:'es',IT:'it',CH:'ch',AT:'at',DK:'dk',PL:'pl',NO:'no',FI:'fi',SE:'se',GB:'gb',IE:'ie',PT:'pt',US:'us',CA:'ca'};
+
+function getFlagImg(countryCode,size=20){
+  const code=COUNTRY_CODES[countryCode];
+  if(!code) return '';
+  return `<img src="https://flagcdn.com/${size}x${Math.round(size*.75)}/${code}.png" srcset="https://flagcdn.com/${size*2}x${Math.round(size*.75*2)}/${code}.png 2x" alt="${countryCode} flag" class="country-flag" width="${size}" height="${Math.round(size*.75)}">`;
+}
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded',()=>{
+  applyTranslations();
+  renderFormSelect();
+  checkAuth();
+  document.getElementById('login-btn').addEventListener('click',login);
+  document.getElementById('login-pass').addEventListener('keypress',e=>{if(e.key==='Enter')login();});
+  document.getElementById('login-user').addEventListener('keypress',e=>{if(e.key==='Enter')document.getElementById('login-pass').focus();});
+  document.querySelectorAll('.nav-item').forEach(item=>{
+    item.addEventListener('click',()=>{navigateTo(item.dataset.page);closeSidebar();});
+  });
+  document.getElementById('hamburger').addEventListener('click',()=>{
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('mobile-overlay').classList.toggle('show');
+  });
+  document.getElementById('mobile-overlay').addEventListener('click',closeSidebar);
+  document.getElementById('logout-btn').addEventListener('click',logout);
+  const gs=document.getElementById('global-search');
+  gs.addEventListener('input',()=>{
+    if(currentPage!=='inventory')navigateTo('inventory');
+    document.getElementById('inv-search').value=gs.value;
+    filterInventory();
+  });
+  document.getElementById('inv-search').addEventListener('input',filterInventory);
+  document.getElementById('inv-sort').addEventListener('change',renderInventory);
+  document.getElementById('inv-rx').addEventListener('change',filterInventory);
+  const nameInput=document.getElementById('med-name');
+  nameInput.addEventListener('input',()=>{
+    clearTimeout(acTimeout);
+    acTimeout=setTimeout(()=>fetchAutocomplete(nameInput.value),200);
+  });
+  nameInput.addEventListener('keydown',handleAcKeydown);
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('.autocomplete-wrap'))hideAutocomplete();
+    if(!e.target.closest('#generic-results')&&!e.target.closest('#med-generic')&&!e.target.closest('button[onclick="searchByGeneric()"]')){
+      const p=document.getElementById('generic-results');
+      if(p)p.style.display='none';
+    }
+  });
+});
+
+// ==================== AUTH ====================
+async function checkAuth(){
+  const res=await fetch('/api/me');
+  const data=await res.json();
+  if(data.authenticated)showApp(data.username);
+}
+
+async function login(){
+  const username=document.getElementById('login-user').value;
+  const password=document.getElementById('login-pass').value;
+  const btn=document.getElementById('login-btn');
+  btn.innerHTML=`<span class="loading-spinner"></span> ${t('signIn')}...`;
+  btn.disabled=true;
+  try{
+    const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+    const data=await res.json();
+    if(data.success){
+      showApp(data.username);
+    }else{
+      document.getElementById('login-error').style.display='block';
+      btn.innerHTML=`<span>${t('signIn')}</span><span>→</span>`;
+      btn.disabled=false;
+    }
+  }catch(err){
+    btn.innerHTML=`<span>${t('signIn')}</span><span>→</span>`;
+    btn.disabled=false;
+    toast(t('connectionError'),'error');
+  }
+}
+
+async function logout(){
+  await fetch('/api/logout',{method:'POST'});
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-page').style.display='flex';
+  document.getElementById('login-user').value='';
+  document.getElementById('login-pass').value='';
+}
+
+async function showApp(username){
+  document.getElementById('login-page').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('username-display').textContent=username;
+  document.getElementById('user-avatar').textContent=username[0].toUpperCase();
+  try{
+    const cfg=await fetch('/api/config').then(r=>r.json());
+    const flagImg=getFlagImg(cfg.country);
+    document.getElementById('sidebar-country-label').innerHTML=`${flagImg}${cfg.country} · ${cfg.medicineDbCount.toLocaleString()} ${t('medicines').toLowerCase()}`;
+    document.getElementById('login-footer').innerHTML=`apoHouze · ${flagImg}${cfg.country} · ${cfg.medicineDbCount.toLocaleString()} ${t('medicines').toLowerCase()}`;
+  }catch(e){}
+  loadCategories();
+  loadDashboard();
+  loadInventory();
+}
+
+// ==================== NAVIGATION ====================
+function navigateTo(page){
+  currentPage=page;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById(`page-${page}`).classList.add('active');
+  document.querySelector(`.nav-item[data-page="${page}"]`)?.classList.add('active');
+  const titles={dashboard:t('navDashboard'),inventory:t('navInventory'),expiring:t('navExpiry'),categories:t('navCategories'),add:t('navAdd')};
+  document.getElementById('topbar-title').textContent=titles[page]||page;
+  if(page==='expiring')loadExpiryPage();
+  if(page==='categories')renderCategoryPage();
+  if(page==='add')renderAddPage();
+}
+
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('mobile-overlay').classList.remove('show');
+}
+
+// ==================== DASHBOARD ====================
+async function loadDashboard(){
+  try{
+    const res=await fetch('/api/dashboard');
+    const data=await res.json();
+    renderStats(data.stats);
+    renderAlerts(data.expiring,data.today);
+    renderCatOverview();
+  }catch(err){console.error(err);}
+}
+
+let lastStats=null, lastAlerts=null, lastAlertsToday=null;
+
+function renderStats(stats){
+  lastStats=stats;
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat-card total"><div class="stat-icon">💊</div><div class="stat-number">${stats.total}</div><div class="stat-label">${t('medicines')}</div><div class="stat-sublabel">${t('totalInventory')}</div></div>
+    <div class="stat-card expired"><div class="stat-icon">⛔</div><div class="stat-number">${stats.expired}</div><div class="stat-label">${t('expired')}</div><div class="stat-sublabel">${t('removeImmediately')}</div></div>
+    <div class="stat-card safe"><div class="stat-icon">✔️</div><div class="stat-number">${stats.total-stats.expired}</div><div class="stat-label">${t('valid')}</div><div class="stat-sublabel">${t('notExpired')}</div></div>
+    <div class="stat-card rx"><div class="stat-icon">🩺</div><div class="stat-number">${stats.rx}</div><div class="stat-label">${t('prescription')}</div><div class="stat-sublabel">${t('rxMedicines')}</div></div>
+    <div class="stat-card cats"><div class="stat-icon">🗂️</div><div class="stat-number">${stats.categories}</div><div class="stat-label">${t('categories')}</div><div class="stat-sublabel">${t('inUse')}</div></div>
+  `;
+  const nb=document.getElementById('nav-total');
+  nb.textContent=stats.total; nb.style.display=stats.total>0?'inline':'none';
+  const eb=document.getElementById('nav-expiry');
+  const expCount=stats.expired+stats.expiring30;
+  eb.textContent=expCount; eb.style.display=expCount>0?'inline':'none';
+}
+
+function renderAlerts(items,today){
+  lastAlerts=items; lastAlertsToday=today;
+  if(!items||items.length===0){
+    document.getElementById('alert-list').innerHTML=`<div class="alert-item" style="background:var(--green-dim);border-color:rgba(56,161,105,.2)"><div class="alert-dot" style="background:var(--green)"></div><span style="font-size:14px;color:var(--green);font-weight:700">${t('allGood')}</span></div>`;
+    return;
+  }
+  const html=items.slice(0,10).map(item=>{
+    const status=getExpiryStatus(item.expiry_date,today);
+    return `<div class="alert-item ${status.cls}" onclick="navigateTo('inventory')">
+      <div class="alert-dot"></div>
+      <div style="flex:1"><div class="alert-name">${item.name}</div><div class="alert-info">${translateCat(item.category)} · ${item.quantity} ${item.unit}</div></div>
+      <span class="expiry-tag expiry-${status.cls==='expired'?'expired':'warn'}">${status.label}</span>
+      <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openEditModal(${item.id})" title="Edit">✏️</button>
+    </div>`;
+  }).join('');
+  document.getElementById('alert-list').innerHTML=html;
+}
+
+async function renderCatOverview(){
+  const inv=inventoryData.length>0?inventoryData:await loadInventory(true);
+  const catMap={};
+  inv.forEach(i=>{catMap[i.category]=(catMap[i.category]||0)+1;});
+  const today=new Date().toISOString().split('T')[0];
+  const catExpired={};
+  inv.forEach(i=>{if(i.expiry_date&&i.expiry_date<today)catExpired[i.category]=(catExpired[i.category]||0)+1;});
+  const html=Object.entries(catMap).map(([cat,count])=>{
+    const icon=CAT_ICONS[cat]||'💊';
+    const expired=catExpired[cat]||0;
+    return `<div class="cat-overview-card" onclick="filterByCategory('${cat}')">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:22px">${icon}</span>
+        ${expired>0?`<span class="section-badge badge-red">${expired} ${t('expired').toLowerCase()}</span>`:''}
+      </div>
+      <div style="font-size:28px;font-weight:800;color:var(--accent);letter-spacing:-1px">${count}</div>
+      <div style="font-size:12.5px;font-weight:600;margin-top:5px;color:var(--text2)">${translateCat(cat)}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('cat-overview').innerHTML=html||`<div style="color:var(--text3);grid-column:1/-1;padding:20px">${t('noMedicines')}</div>`;
+}
+
+function filterByCategory(cat){
+  navigateTo('inventory');
+  activeCategory=cat;
+  document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`.cat-pill[data-cat="${cat}"]`)?.classList.add('active');
+  filterInventory();
+}
+
+// ==================== INVENTORY ====================
+async function loadInventory(returnData=false){
+  try{
+    const res=await fetch('/api/inventory');
+    inventoryData=await res.json();
+    if(!returnData)renderInventory();
+    return inventoryData;
+  }catch(err){console.error(err);return [];}
+}
+
+function filterInventory(){renderInventory();}
+
+function renderInventory(){
+  const search=document.getElementById('inv-search').value.toLowerCase();
+  const sort=document.getElementById('inv-sort').value;
+  const rxOnly=document.getElementById('inv-rx').checked;
+  const today=new Date().toISOString().split('T')[0];
+  let data=[...inventoryData];
+  if(search)data=data.filter(i=>i.name.toLowerCase().includes(search)||(i.generic||'').toLowerCase().includes(search)||i.category.toLowerCase().includes(search));
+  if(rxOnly)data=data.filter(i=>i.rx);
+  if(activeCategory)data=data.filter(i=>i.category===activeCategory);
+  data.sort((a,b)=>{
+    if(sort==='name')return a.name.localeCompare(b.name);
+    if(sort==='category')return a.category.localeCompare(b.category);
+    const da=a.expiry_date||'9999-99',db=b.expiry_date||'9999-99';
+    return da.localeCompare(db);
+  });
+  const tbody=document.getElementById('inventory-tbody');
+  if(!data.length){
+    tbody.innerHTML=`<tr><td colspan="6" style="padding:40px;text-align:center;color:var(--text3)">${t('noMedicines')}</td></tr>`;
+    document.getElementById('inv-count').textContent='';
+    return;
+  }
+  tbody.innerHTML=data.map(item=>{
+    const status=getExpiryStatus(item.expiry_date,today);
+    return `<tr>
+      <td><div class="med-name">${item.name}${item.rx?`<span class="rx-badge">Rx</span>`:''}</div>${item.generic?`<div class="med-generic">${item.generic}</div>`:''}</td>
+      <td><span class="cat-tag">${translateCat(item.category)}</span></td>
+      <td style="color:var(--text2)">${item.quantity} ${item.unit}</td>
+      <td><span class="expiry-tag expiry-${status.expClass}">${formatDate(item.expiry_date)}</span></td>
+      <td style="color:var(--text3);font-size:12px">${item.location||'—'}</td>
+      <td style="text-align:right">
+        <button class="btn btn-ghost btn-sm" onclick="openEditModal(${item.id})" title="Edit">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmDelete(${item.id},'${item.name.replace(/'/g,"\\'")}')">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('inv-count').textContent=`${data.length} ${t('medicines').toLowerCase()}`;
+}
+
+function renderCategoryPills(){
+  const cats=[...new Set(inventoryData.map(i=>i.category))].sort();
+  const container=document.getElementById('inv-cat-pills');
+  container.innerHTML=`<div class="cat-pill ${!activeCategory?'active':''}" data-cat="" onclick="filterByCategory2('')">${t('all')}</div>`;
+  cats.forEach(cat=>{
+    const icon=CAT_ICONS[cat]||'';
+    const div=document.createElement('div');
+    div.className=`cat-pill${activeCategory===cat?' active':''}`;
+    div.dataset.cat=cat;
+    div.onclick=()=>filterByCategory2(cat);
+    div.textContent=`${icon} ${translateCat(cat)}`;
+    container.appendChild(div);
+  });
+}
+
+function filterByCategory2(cat){
+  activeCategory=cat;
+  document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`.cat-pill[data-cat="${cat}"]`)?.classList.add('active');
+  filterInventory();
+}
+
+// ==================== CATEGORIES ====================
+async function loadCategories(){
+  try{
+    const res=await fetch('/api/categories');
+    categories=await res.json();
+    populateCategorySelect();
+    renderCategoryPills();
+  }catch(err){}
+}
+
+function populateCategorySelect(){
+  const sel=document.getElementById('med-category');
+  const current=sel.value;
+  sel.innerHTML=`<option value="">${t('selectCategory')}</option>`+categories.map(c=>`<option value="${c}">${translateCat(c)}</option>`).join('');
+  if(current)sel.value=current;
+}
+
+function renderCategoryPage(){
+  const catMap={};
+  const today=new Date().toISOString().split('T')[0];
+  inventoryData.forEach(i=>{
+    if(!catMap[i.category])catMap[i.category]={total:0,expired:0};
+    catMap[i.category].total++;
+    if(i.expiry_date&&i.expiry_date<today)catMap[i.category].expired++;
+  });
+  const html=Object.entries(catMap).map(([cat,info])=>{
+    const icon=CAT_ICONS[cat]||'💊';
+    return `<div class="cat-overview-card" onclick="filterByCategory('${cat}')">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <span style="font-size:26px">${icon}</span>
+        <span style="font-size:14px;font-weight:700;color:var(--text)">${translateCat(cat)}</span>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <span style="font-size:12px;padding:3px 10px;border-radius:20px;background:var(--accent-dim);color:var(--accent);font-weight:600">${info.total} ${t('medicines').toLowerCase()}</span>
+        ${info.expired>0?`<span class="section-badge badge-red">${info.expired} ${t('expired').toLowerCase()}</span>`:`<span class="section-badge badge-green">✓ OK</span>`}
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('cat-grid').innerHTML=html||`<p style="color:var(--text3)">${t('noMedicines')}</p>`;
+}
+
+// ==================== EXPIRY PAGE ====================
+async function loadExpiryPage(){
+  try{
+    const res=await fetch('/api/dashboard');
+    const data=await res.json();
+    const today=data.today;
+    const items=data.expiring||[];
+    const tbody=document.getElementById('expiry-tbody');
+    if(!items.length){
+      tbody.innerHTML=`<tr><td colspan="6" style="padding:40px;text-align:center"><span style="color:var(--green);font-weight:700">${t('allGood')}</span></td></tr>`;
+      return;
+    }
+    tbody.innerHTML=items.map(item=>{
+      const status=getExpiryStatus(item.expiry_date,today);
+      return `<tr>
+        <td><div class="med-name">${item.name}</div></td>
+        <td><span class="cat-tag">${translateCat(item.category)}</span></td>
+        <td>${formatDate(item.expiry_date)}</td>
+        <td><span class="expiry-tag expiry-${status.cls==='expired'?'expired':'warn'}">${status.label}</span></td>
+        <td>${item.quantity} ${item.unit}</td>
+        <td style="text-align:right"><button class="btn btn-ghost btn-sm" onclick="openEditModal(${item.id})">✏️</button></td>
+      </tr>`;
+    }).join('');
+  }catch(err){}
+}
+
+// ==================== MODAL ====================
+function openAddModal(){
+  currentEditId=null;
+  document.getElementById('modal-title').textContent=t('addMedicine');
+  document.getElementById('save-btn-text').textContent=t('save');
+  document.getElementById('med-name').value='';
+  document.getElementById('med-generic').value='';
+  document.getElementById('med-category').value='';
+  document.getElementById('med-form').value='';
+  document.getElementById('med-qty').value=1;
+  document.getElementById('med-unit').value='units';
+  document.getElementById('med-expiry').value='';
+  document.getElementById('med-location').value='Medicine cabinet';
+  document.getElementById('med-notes').value='';
+  document.getElementById('med-rx').checked=false;
+  document.getElementById('generic-results').style.display='none';
+  document.getElementById('modal-overlay').classList.add('active');
+  setTimeout(()=>document.getElementById('med-name').focus(),100);
+}
+
+async function openEditModal(id){
+  const item=inventoryData.find(i=>i.id===id);
+  if(!item)return;
+  currentEditId=id;
+  document.getElementById('modal-title').textContent=t('editMedicine');
+  document.getElementById('save-btn-text').textContent=t('save');
+  document.getElementById('med-name').value=item.name;
+  document.getElementById('med-generic').value=item.generic||'';
+  document.getElementById('med-category').value=item.category;
+  document.getElementById('med-form').value=item.form||'';
+  document.getElementById('med-qty').value=item.quantity;
+  document.getElementById('med-unit').value=item.unit;
+  document.getElementById('med-expiry').value=item.expiry_date?item.expiry_date.slice(0,7):'';
+  document.getElementById('med-location').value=item.location||'Medicine cabinet';
+  document.getElementById('med-notes').value=item.notes||'';
+  document.getElementById('med-rx').checked=!!item.rx;
+  document.getElementById('generic-results').style.display='none';
+  document.getElementById('modal-overlay').classList.add('active');
+}
+
+function closeModal(){
+  document.getElementById('modal-overlay').classList.remove('active');
+  currentEditId=null;
+  hideAutocomplete();
+}
+
+async function saveItem(){
+  const name=document.getElementById('med-name').value.trim();
+  const category=document.getElementById('med-category').value;
+  if(!name||!category){toast(t('nameAndCategoryRequired'),'warn');return;}
+  const expiryVal=document.getElementById('med-expiry').value;
+  const body={
+    name,category,
+    generic:document.getElementById('med-generic').value.trim(),
+    form:document.getElementById('med-form').value,
+    quantity:parseInt(document.getElementById('med-qty').value)||1,
+    unit:document.getElementById('med-unit').value,
+    expiry_date:expiryVal?expiryVal+'-01':null,
+    notes:document.getElementById('med-notes').value.trim(),
+    location:document.getElementById('med-location').value,
+    rx:document.getElementById('med-rx').checked?1:0,
+  };
+  try{
+    let res;
+    if(currentEditId){
+      res=await fetch(`/api/inventory/${currentEditId}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    }else{
+      res=await fetch('/api/inventory',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    }
+    if(res.ok){
+      closeModal();
+      await loadInventory();
+      await loadDashboard();
+      renderCategoryPills();
+      populateCategorySelect();
+      toast(currentEditId?t('medicineUpdated'):t('medicineAdded'),'success');
+    }else{
+      const err=await res.json();
+      toast(err.error||t('errorSaving'),'error');
+    }
+  }catch(err){toast(t('connectionError'),'error');}
+}
+
+// ==================== DELETE ====================
+function confirmDelete(id,name){
+  document.getElementById('confirm-msg').textContent=`${t('deleteConfirm')}: "${name}"?`;
+  document.getElementById('confirm-overlay').classList.add('active');
+  document.getElementById('confirm-ok').onclick=()=>deleteItem(id);
+  confirmCallback=()=>deleteItem(id);
+}
+
+function closeConfirm(){
+  document.getElementById('confirm-overlay').classList.remove('active');
+  confirmCallback=null;
+}
+
+async function deleteItem(id){
+  try{
+    const res=await fetch(`/api/inventory/${id}`,{method:'DELETE'});
+    if(res.ok){
+      closeConfirm();
+      await loadInventory();
+      await loadDashboard();
+      renderCategoryPills();
+      toast(t('medicineDeleted'),'success');
+    }
+  }catch(err){toast(t('errorDeleting'),'error');}
+}
+
+// ==================== AUTOCOMPLETE ====================
+async function fetchAutocomplete(q){
+  if(q.length<2){hideAutocomplete();return;}
+  try{
+    const res=await fetch(`/api/medicines/search?q=${encodeURIComponent(q)}`);
+    const data=await res.json();
+    showAutocomplete(data);
+  }catch(err){}
+}
+
+function showAutocomplete(items){
+  const dd=document.getElementById('ac-dropdown');
+  acSelectedIndex=-1;
+  if(!items.length){hideAutocomplete();return;}
+  const input=document.getElementById('med-name');
+  const rect=input.getBoundingClientRect();
+  dd.style.top=(rect.bottom+4)+'px';
+  dd.style.left=rect.left+'px';
+  dd.style.width=rect.width+'px';
+  dd.innerHTML=items.map((item,i)=>`
+    <div class="ac-item" data-index="${i}" onclick="selectAcItem(${i})">
+      <div class="ac-name">${item.name}</div>
+      <div class="ac-sub"><span class="ac-cat">${translateCat(item.category)}</span>${item.generic?`<span>· ${item.generic}</span>`:''}${item.form?`<span>· ${translateForm(item.form)}</span>`:''}${item.rx?'<span style="color:#805AD5">· Rx</span>':''}</div>
+    </div>`).join('');
+  dd.dataset.items=JSON.stringify(items);
+  dd.classList.add('show');
+}
+
+function selectAcItem(index){
+  const dd=document.getElementById('ac-dropdown');
+  const items=JSON.parse(dd.dataset.items||'[]');
+  const item=items[index];
+  if(!item)return;
+  document.getElementById('med-name').value=item.name;
+  document.getElementById('med-generic').value=item.generic||'';
+  document.getElementById('med-category').value=item.category;
+  document.getElementById('med-form').value=item.form||'';
+  document.getElementById('med-rx').checked=!!item.rx;
+  hideAutocomplete();
+  document.getElementById('med-qty').focus();
+}
+
+function handleAcKeydown(e){
+  const dd=document.getElementById('ac-dropdown');
+  if(!dd.classList.contains('show'))return;
+  const items=dd.querySelectorAll('.ac-item');
+  if(e.key==='ArrowDown'){e.preventDefault();acSelectedIndex=Math.min(acSelectedIndex+1,items.length-1);updateAcSelection(items);}
+  else if(e.key==='ArrowUp'){e.preventDefault();acSelectedIndex=Math.max(acSelectedIndex-1,-1);updateAcSelection(items);}
+  else if(e.key==='Enter'){e.preventDefault();if(acSelectedIndex>=0)selectAcItem(acSelectedIndex);}
+  else if(e.key==='Escape'){hideAutocomplete();}
+}
+
+function updateAcSelection(items){
+  items.forEach((item,i)=>item.classList.toggle('selected',i===acSelectedIndex));
+  if(acSelectedIndex>=0)items[acSelectedIndex].scrollIntoView({block:'nearest'});
+}
+
+function hideAutocomplete(){
+  document.getElementById('ac-dropdown').classList.remove('show');
+  acSelectedIndex=-1;
+}
+
+// ==================== GENERIC BRAND SEARCH ====================
+async function searchByGeneric(){
+  const q=document.getElementById('med-generic').value.trim();
+  if(q.length<2){toast(t('typeIngredient'),'warn');return;}
+  const panel=document.getElementById('generic-results');
+  panel.style.display='block';
+  panel.innerHTML=`<div style="padding:12px;font-size:13px;color:var(--text3)">${t('loading')}</div>`;
+  try{
+    const res=await fetch(`/api/medicines/search?q=${encodeURIComponent(q)}`);
+    const data=await res.json();
+    const matches=data.filter(item=>item.generic&&item.generic.toLowerCase().includes(q.toLowerCase()));
+    if(!matches.length){
+      panel.innerHTML=`<div style="padding:12px;font-size:13px;color:var(--text3)">${t('noBrandsFound')}</div>`;
+      return;
+    }
+    panel.innerHTML=`
+      <div style="padding:8px 12px;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);background:var(--surface)">
+        ${matches.length} ${t('brandsFound')} "${q}" — ${t('clickToSelect')}
+      </div>
+      ${matches.map(item=>`
+        <div onclick="pickGenericBrand('${item.name.replace(/'/g,"\\'")}','${(item.generic||'').replace(/'/g,"\\'")}','${item.category.replace(/'/g,"\\'")}','${(item.form||'').replace(/'/g,"\\'")}',${item.rx?1:0})"
+          style="padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s;"
+          onmouseover="this.style.background='var(--surface)'" onmouseout="this.style.background=''">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${item.name}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap">
+            <span style="color:var(--accent)">${translateCat(item.category)}</span>
+            ${item.form?`<span>· ${translateForm(item.form)}</span>`:''}
+            ${item.rx?'<span style="color:var(--purple);font-weight:700">· Rx</span>':'<span style="color:var(--green)">· OTC</span>'}
+          </div>
+        </div>`).join('')}`;
+  }catch(err){
+    panel.innerHTML=`<div style="padding:12px;font-size:13px;color:var(--red)">${t('searchError')}</div>`;
+  }
+}
+
+function pickGenericBrand(name,generic,category,form,rx){
+  document.getElementById('med-name').value=name;
+  document.getElementById('med-generic').value=generic;
+  document.getElementById('med-category').value=category;
+  document.getElementById('med-form').value=form;
+  document.getElementById('med-rx').checked=!!rx;
+  document.getElementById('generic-results').style.display='none';
+  document.getElementById('med-qty').focus();
+  toast(t('medicineSelected'),'success');
+}
+
+// ==================== ADD PAGE ====================
+function renderAddPage(){
+  document.getElementById('quick-add-form').innerHTML=`
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:32px;box-shadow:var(--shadow)">
+      <p style="color:var(--text2);margin-bottom:20px;font-size:14px">${t('addMedicineLead')}</p>
+      <button class="btn btn-primary" onclick="openAddModal()">${t('addMedicineBtn')}</button>
+    </div>`;
+}
+
+// ==================== HELPERS ====================
+function getExpiryStatus(expiryDate,today){
+  if(!expiryDate)return{cls:'none',expClass:'none',label:t('noDate')};
+  if(expiryDate<today)return{cls:'expired',expClass:'expired',label:t('expiryExpired')};
+  const d30=new Date(Date.now()+30*86400000).toISOString().split('T')[0];
+  const d90=new Date(Date.now()+90*86400000).toISOString().split('T')[0];
+  if(expiryDate<=d30)return{cls:'warn30',expClass:'warn',label:t('expiry30')};
+  if(expiryDate<=d90)return{cls:'warn90',expClass:'ok',label:t('expiry90')};
+  return{cls:'ok',expClass:'ok',label:t('expiryOk')};
+}
+
+function formatDate(dateStr){
+  if(!dateStr)return '—';
+  const d=new Date(dateStr+'T00:00:00');
+  const locale=currentLang==='nl'?'nl-BE':currentLang==='fr'?'fr-BE':'en-GB';
+  return d.toLocaleDateString(locale,{year:'numeric',month:'short'});
+}
+
+function toast(message,type='success'){
+  const icons={success:'✅',error:'❌',warn:'⚠️'};
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.innerHTML=`<span>${icons[type]}</span> ${message}`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+
+document.getElementById('modal-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+document.getElementById('confirm-overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeConfirm();});
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js').catch(err=>console.log('SW failed:',err));
+  });
+}
+</script>
+</body>
+</html>

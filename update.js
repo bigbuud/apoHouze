@@ -270,29 +270,16 @@ async function updateNL() {
   if (!country) { console.error('  ❌ nl.js niet gevonden'); return 0; }
 
   const dest = path.join(TMP_DIR, 'nl_medicines.bin');
-  const urls = [
-    'https://data.openstate.eu/dataset/2e0055db-6f28-4b05-920b-a648ba026baa/resource/1efaa651-add9-40f5-8b0c-2c2f2d352e11/download/geneesmiddeleninformatiebank.csv',
-    'https://www.geneesmiddeleninformatiebank.nl/nl/download',
-  ];
+  // Officiële CBG download — alle vergunde NL medicijnen, wekelijks bijgewerkt
+  const url = 'https://www.geneesmiddeleninformatiebank.nl/metadata.csv';
 
-  let downloaded = false;
-  for (const url of urls) {
-    try {
-      console.log(`  📥 Probeer: ${url}`);
-      const size = curlDownload(url, dest);
-      if (size > 50000) {
-        console.log(`  ✅ Gedownload: ${(size/1024).toFixed(0)} KB`);
-        downloaded = true;
-        break;
-      }
-    } catch (e) {
-      console.log(`  ⚠️  ${e.message.split('\n')[0]}`);
-    }
-    if (fs.existsSync(dest)) fs.unlinkSync(dest);
-  }
-
-  if (!downloaded) {
-    console.error('  ❌ CBG download mislukt');
+  try {
+    console.log(`  📥 Downloaden van geneesmiddeleninformatiebank.nl...`);
+    const size = curlDownload(url, dest);
+    if (size < 10000) throw new Error(`Bestand te klein: ${size} bytes`);
+    console.log(`  ✅ Gedownload: ${(size/1024).toFixed(0)} KB`);
+  } catch (e) {
+    console.error(`  ❌ Download mislukt: ${e.message}`);
     return 0;
   }
 

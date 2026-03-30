@@ -3928,96 +3928,6 @@ const MEDICINES = [
   { name: "Lignocaine (oral) Teva 5%", generic: "Lignocaine (oral)", category: "Oral Care", form: "Ointment", rx: false },
   { name: "Lignocaine (oral) Mylan 2%", generic: "Lignocaine (oral)", category: "Oral Care", form: "Gel", rx: false },
   { name: "Lignocaine (oral) Mylan 5%", generic: "Lignocaine (oral)", category: "Oral Care", form: "Ointment", rx: false },
-];
-
-const CATEGORIES = [
-  {
-    "name": "Pain & Fever"
-  },
-  {
-    "name": "Allergy"
-  },
-  {
-    "name": "Antibiotics"
-  },
-  {
-    "name": "Stomach & Intestine"
-  },
-  {
-    "name": "Skin & Wounds"
-  },
-  {
-    "name": "Cough & Cold"
-  },
-  {
-    "name": "Eye & Ear"
-  },
-  {
-    "name": "Vitamins & Supplements"
-  },
-  {
-    "name": "Sleep & Sedation"
-  },
-  {
-    "name": "Heart & Blood Pressure"
-  },
-  {
-    "name": "Diabetes"
-  },
-  {
-    "name": "Thyroid"
-  },
-  {
-    "name": "Joints & Muscles"
-  },
-  {
-    "name": "Women's Health"
-  },
-  {
-    "name": "Lungs & Asthma"
-  },
-  {
-    "name": "Migraine"
-  },
-  {
-    "name": "Neurology"
-  },
-  {
-    "name": "Cholesterol"
-  },
-  {
-    "name": "Antidepressants"
-  },
-  {
-    "name": "Smoking Cessation"
-  },
-  {
-    "name": "First Aid"
-  },
-  {
-    "name": "Urology"
-  },
-  {
-    "name": "Corticosteroids"
-  },
-  {
-    "name": "Antiparasitics"
-  },
-  {
-    "name": "Antifungals"
-  },
-  {
-    "name": "Antivirals"
-  },
-  {
-    "name": "Anticoagulants"
-  },
-  {
-    "name": "Oral Care"
-  },
-  {
-    "name": "Nervous System"
-  }
   { name: "Zolsketil Pegylated Liposomal 2 mg/ml inf. disp. (conc.) i.v. vial", generic: "", category: "Oncology", form: "Injection", rx: false },
   { name: "Ovamex 0.25 mg/0.5 ml inj. sol. s.c. pre-filled syr.", generic: "", category: "Thyroid", form: "Injection", rx: false },
   { name: "Sondelbay 20 µg/80 µl inj. sol. i.v. pre-filled pen", generic: "", category: "Vitamins & Supplements", form: "Injection", rx: false },
@@ -11921,7 +11831,96 @@ const CATEGORIES = [
   { name: "Byesilor 6 mg/ml inj. sol. s.c. pre-filled pen", generic: "", category: "Diabetes", form: "Injection", rx: false },
   { name: "Otulfi 45 mg inj. sol. s.c. pre-filled pen", generic: "", category: "Corticosteroids", form: "Injection", rx: false },
   { name: "Otulfi 90 mg inj. sol. s.c. pre-filled pen", generic: "", category: "Corticosteroids", form: "Injection", rx: false },
+];
 
+const CATEGORIES = [
+  {
+    "name": "Pain & Fever"
+  },
+  {
+    "name": "Allergy"
+  },
+  {
+    "name": "Antibiotics"
+  },
+  {
+    "name": "Stomach & Intestine"
+  },
+  {
+    "name": "Skin & Wounds"
+  },
+  {
+    "name": "Cough & Cold"
+  },
+  {
+    "name": "Eye & Ear"
+  },
+  {
+    "name": "Vitamins & Supplements"
+  },
+  {
+    "name": "Sleep & Sedation"
+  },
+  {
+    "name": "Heart & Blood Pressure"
+  },
+  {
+    "name": "Diabetes"
+  },
+  {
+    "name": "Thyroid"
+  },
+  {
+    "name": "Joints & Muscles"
+  },
+  {
+    "name": "Women's Health"
+  },
+  {
+    "name": "Lungs & Asthma"
+  },
+  {
+    "name": "Migraine"
+  },
+  {
+    "name": "Neurology"
+  },
+  {
+    "name": "Cholesterol"
+  },
+  {
+    "name": "Antidepressants"
+  },
+  {
+    "name": "Smoking Cessation"
+  },
+  {
+    "name": "First Aid"
+  },
+  {
+    "name": "Urology"
+  },
+  {
+    "name": "Corticosteroids"
+  },
+  {
+    "name": "Antiparasitics"
+  },
+  {
+    "name": "Antifungals"
+  },
+  {
+    "name": "Antivirals"
+  },
+  {
+    "name": "Anticoagulants"
+  },
+  {
+    "name": "Oral Care"
+  },
+  {
+    "name": "Nervous System"
+  }
 ];
 
 module.exports = { MEDICINES, CATEGORIES };

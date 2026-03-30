@@ -122,7 +122,8 @@ function appendMedicines(code, medicines) {
   if (!medicines.length) return 0;
   const fp = path.join(DATA_DIR, `${code}.js`);
   let content = fs.readFileSync(fp, 'utf8');
-  const insertAt = content.lastIndexOf('\n];');
+  // Zoek de ]; die de MEDICINES array sluit — altijd de EERSTE ]; in het bestand
+  const insertAt = content.indexOf('\n];');
   if (insertAt === -1) return 0;
   const lines = medicines.map(m =>
     `  { name: ${JSON.stringify(m.name)}, generic: ${JSON.stringify(m.generic||'')}, ` +

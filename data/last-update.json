@@ -1,11 +1,11 @@
 {
-  "updated_at": "2026-04-02T19:35:26.912Z",
+  "updated_at": "2026-04-02T19:44:32.434Z",
   "dry_run": false,
   "results": {
     "de": {
       "before": 3898,
-      "after": 3898,
-      "added": 0
+      "after": 5410,
+      "added": 1512
     },
     "gb": {
       "before": 3900,

@@ -333,39 +333,43 @@ async function updateDE() {
 // Bestand: products.csv (~50MB, geen authenticatie)
 // ================================================================
 async function updateGB() {
-  console.log('\n🇬🇧 Verenigd Koninkrijk — MHRA Products Database ophalen...');
+  console.log('\n🇬🇧 Verenigd Koninkrijk — NHSBSA BNF Code Information ophalen...');
   const country = loadExistingNames('gb');
   if (!country) { console.error('  ❌ gb.js niet gevonden'); return 0; }
 
-  const dest = path.join(TMP_DIR, 'gb_medicines.csv');
+  const { execSync } = require('child_process');
+  const script = path.join(__dirname, 'fetch_gb_medicines.py');
 
-  // MHRA publiceert products.csv als open data
-  // Kolomstructuur: Product Name, Active Ingredient, ATC Code, Pharmaceutical Form, Legal Category
-  const urls = [
-    'https://products.mhra.gov.uk/api/download/csv',
-    'https://products.mhra.gov.uk/downloads/products.csv',
-    'https://www.gov.uk/guidance/product-licences-pls/products-csv',
-  ];
-
-  let downloaded = false;
-  for (const url of urls) {
-    try {
-      console.log(`  📥 Proberen: ${url}`);
-      const size = curlDownload(url, dest, 180);
-      if (size > 10000) {
-        console.log(`  ✅ Gedownload: ${(size/1024).toFixed(0)} KB`);
-        downloaded = true;
-        break;
-      }
-    } catch (e) {
-      console.log(`  ⚠️  URL mislukt: ${e.message}`);
-    }
-  }
-
-  if (!downloaded) {
-    console.error('  ❌ MHRA download mislukt — alle URLs geprobeerd');
+  if (!fs.existsSync(script)) {
+    console.error('  ❌ fetch_gb_medicines.py niet gevonden');
     return 0;
   }
+
+  let python = 'python3';
+  try { execSync('python3 --version', { stdio: 'ignore' }); }
+  catch { try { execSync('python --version', { stdio: 'ignore' }); python = 'python'; } catch { console.error('  ❌ Python niet gevonden'); return 0; } }
+
+  console.log('  🐍 Python fetch script uitvoeren (NHSBSA CKAN API)...');
+  try {
+    execSync(`${python} "${script}"`, {
+      stdio: 'inherit',
+      timeout: 360_000,
+      cwd: __dirname,
+    });
+  } catch (e) {
+    console.error(`  ❌ Python script mislukt: ${e.message}`);
+    return 0;
+  }
+
+  const dest = path.join(TMP_DIR, 'gb_medicines.csv');
+  if (!fs.existsSync(dest)) {
+    console.error('  ❌ gb_medicines.csv niet aangemaakt door script');
+    return 0;
+  }
+
+  const size = fs.statSync(dest).size;
+  if (size < 1000) { console.error(`  ❌ CSV te klein: ${size} bytes`); return 0; }
+  console.log(`  ✅ CSV gereed: ${(size/1024).toFixed(0)} KB`);
 
   return parseFile(dest, 'gb', country);
 }

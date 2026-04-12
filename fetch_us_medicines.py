@@ -1,29 +1,32 @@
 #!/usr/bin/env python3
 """
-apoHouze — Verenigde Staten Medicijnen Fetcher v2
+apoHouze — Verenigde Staten Medicijnen Fetcher v3
 ==================================================
-Bron: FDA NDC Directory flat files (fda.gov/drugs)
-  https://www.fda.gov/drugs/drug-approvals-and-databases/national-drug-code-directory
+Bron: FDA NDC Directory flat files
+  https://www.accessdata.fda.gov/cder/ndctext.zip
 
-Het FDA NDC product.txt bevat 100.000+ producten met:
-  PROPRIETARYNAME  → merknaam
-  NONPROPRIETARYNAME → generieke naam
-  PHARMACLASSCS    → farmacologische klasse (voor categoriemapping)
-  DOSAGEFORMNAME   → farmaceutische vorm
-  DEASCHEDULE      → DEA-schedule (voor Rx/OTC)
-  MARKETINGCATEGORYNAME → "PRESCRIPTION" / "OTC MONOGRAPH" etc.
+product.txt kolommen (tab-gescheiden, met header):
+  PRODUCTID, PRODUCTNDC, PRODUCTTYPENAME, PROPRIETARYNAME,
+  PROPRIETARYNAMESUFFIX, NONPROPRIETARYNAME, DOSAGEFORMNAME,
+  ROUTENAME, STARTMARKETINGDATE, ENDMARKETINGDATE,
+  MARKETINGCATEGORYNAME, APPLICATIONNUMBER, LABELERNAME,
+  SUBSTANCENAME, ACTIVE_NUMERATOR_STRENGTH, ACTIVE_INGRED_UNIT,
+  PHARM_CLASSES, DEASCHEDULE, NDC_EXCLUDE_FLAG,
+  LISTING_RECORD_CERTIFIED_THROUGH
 
-Fallback: als fda.gov geblokkeerd is, gebruik openFDA API met
-  paginering (max 1000/aanroep, geen API-key nodig) voor alle
-  records met pharm_class, en generieke-naam-mapping voor de rest.
+Strategie:
+  - Per FDA-product sla ZOWEL de merknaam (PROPRIETARYNAME) ALS de
+    generieke naam (NONPROPRIETARYNAME) op als aparte entries
+    → zo krijg je zowel "Tylenol" als "Acetaminophen" in de DB
+  - Dedup-sleutel = naam.lower() (eenvoudig, effectief)
+  - Categorisatie: PHARM_CLASSES eerst, dan NONPROPRIETARYNAME keyword-match
+  - Geen ENDMARKETINGDATE-filter (te onbetrouwbaar); gebruik NDC_EXCLUDE_FLAG
+  - BLACKLIST voor bloedproducten, vaccins, diagnostica
 
 Output: data/_tmp/us_medicines.csv
-  Kolommen: Name,INN,ATC,PharmaceuticalForm,RxStatus,Country
-
-Gebruik: python3 fetch_us_medicines.py [--debug]
 """
 
-import sys, os, re, csv, time, subprocess, json, zipfile, io, urllib.request
+import sys, os, re, csv, time, subprocess, zipfile, io
 
 DEBUG = "--debug" in sys.argv
 SCRIPT_DIR  = os.path.dirname(os.path.abspath(__file__))
@@ -31,218 +34,331 @@ TMP_DIR     = os.path.join(SCRIPT_DIR, "data", "_tmp")
 OUTPUT_FILE = os.path.join(TMP_DIR, "us_medicines.csv")
 os.makedirs(TMP_DIR, exist_ok=True)
 
-# FDA NDC flat file ZIP (bevat product.txt met alle producten)
 FDA_NDC_URLS = [
     "https://www.accessdata.fda.gov/cder/ndctext.zip",
     "https://www.fda.gov/files/drugs/published/NDC-Database-File---Product-Labeler.zip",
 ]
 
-# Generieke naam → categorie (breed keyword-gebaseerd, werkt op NONPROPRIETARYNAME)
-# Dit is de primaire mapping als PHARMACLASSCS ontbreekt
+# ================================================================
+# PHARM_CLASS → categorie  (FDA EPC-strings)
+# ================================================================
+PHARM_CLASS_MAP = [
+    (r"analgesic|nonsteroidal anti.inflam|nsaid|opioid|narcotic|antipyretic|salicylate", "Pain & Fever"),
+    (r"antibacterial|antibiotic|penicillin|cephalosporin|macrolide|quinolone|tetracycline|aminoglycoside|carbapenem|lincosamide|nitrofuran|oxazolidinone|rifamycin|sulfonamide|glycopeptide", "Antibiotics"),
+    (r"antiviral|antiretroviral|neuraminidase|reverse transcriptase|integrase|protease inhibitor.*antiviral|nucleoside.*antiviral", "Antivirals"),
+    (r"antifungal|azole antifungal|polyene antifungal|allylamine", "Antifungals"),
+    (r"antiparasit|anthelmintic|antimalarial|antiprotozoal|ectoparasiticide", "Antiparasitics"),
+    (r"antihistamine|histamine.*receptor.*antagonist.*\[epc\]|h1.*receptor", "Allergy"),
+    (r"decongestant|expectorant|antitussive|mucolytic|nasal decongestant", "Cough & Cold"),
+    (r"bronchodilator|beta.*agonist.*\[moa\]|short.acting beta|long.acting beta|anticholinergic.*pulmonary|leukotriene|inhaled.*corticosteroid|phosphodiesterase.*inhibitor.*pulmonary|mast cell stabilizer", "Lungs & Asthma"),
+    (r"proton pump inhibitor|antacid|h2.*receptor.*antagonist|laxative|antidiarrheal|antiemetic|prokinetic|gastrointestinal|5.aminosalicylate|intestinal anti.inflam", "Stomach & Intestine"),
+    (r"antihypertensive|beta.*adrenergic.*blocker|ace inhibitor|angiotensin.*receptor.*blocker|calcium.*channel.*blocker|diuretic.*cardiac|vasodilator|cardiac glycoside|antiarrhythmic|alpha.*blocker.*cardiac|direct renin", "Heart & Blood Pressure"),
+    (r"hmg.coa|statin|lipid.lowering|cholesterol absorption|fibric acid|bile acid|pcsk9", "Cholesterol"),
+    (r"anticoagulant|antiplatelet|factor xa|direct thrombin|vitamin k antagonist|heparin|thrombolytic|platelet aggregation", "Anticoagulants"),
+    (r"antidiabetic|insulin|hypoglycemic|glp.1|sglt|dpp.4|incretin|biguanide|sulfonylurea|thiazolidinedione|alpha.glucosidase|glinide|amylin", "Diabetes"),
+    (r"thyroid|antithyroid|thyroid hormone", "Thyroid"),
+    (r"corticosteroid|glucocorticoid|mineralocorticoid|adrenal corticosteroid", "Corticosteroids"),
+    (r"anticonvulsant|antiepileptic|anti.parkinson|dopamine.*agonist.*\[moa\]|cholinesterase inhibitor|nmda.*antagonist|glutamate.*antagonist", "Neurology"),
+    (r"sedative|hypnotic|anxiolytic|benzodiazepine|gaba.*agonist|melatonin.*agonist|orexin.*antagonist", "Sleep & Sedation"),
+    (r"antidepressant|ssri|snri|serotonin.*norepinephrine|serotonin.*reuptake|monoamine.*oxidase|tricyclic|atypical antidepressant|norepinephrine.*dopamine.*reuptake|serotonin.*modulator", "Antidepressants"),
+    (r"vitamin|mineral supplement|iron.*supplement|folic acid|electrolyte|nutritional", "Vitamins & Supplements"),
+    (r"contraceptive|estrogen|progestin|hormone.*replacement|ovulation.*stimulant|selective.*estrogen.*receptor|aromatase.*inhibitor.*gynecol|tocolytic|uterotonic|cervical.*ripening", "Women's Health"),
+    (r"alpha.*adrenergic.*blocker.*urolog|5.alpha.*reductase|phosphodiesterase type 5|overactive.*bladder|muscarinic.*antagonist.*urolog|beta.3.*adrenergic.*agonist", "Urology"),
+    (r"antineoplastic|chemotherapy|cytotoxic|kinase inhibitor.*oncol|checkpoint inhibitor|proteasome inhibitor|histone deacetylase|bcl.*inhibitor|immunomodulator.*oncol|hormone.*antagonist.*oncol", "Oncology"),
+    (r"muscle.*relaxant|gout|uricosuric|bisphosphonate|dmard|disease.*modifying|tnf.*inhibitor|interleukin.*inhibitor|jak.*inhibitor|xanthine oxidase inhibitor", "Joints & Muscles"),
+    (r"topical.*dermatologic|retinoid|keratolytic|emollient|topical.*anti.infective.*derm|topical.*corticosteroid|topical.*calcineurin|topical.*antifungal.*derm|topical.*antibiotic", "Skin & Wounds"),
+    (r"ophthalmic|ocular.*antibiotic|ophthalmic.*anti.inflam|glaucoma|prostaglandin.*analog.*eye|carbonic anhydrase.*eye|alpha.*agonist.*eye|otic", "Eye & Ear"),
+    (r"local anesthetic|topical.*anesthetic|antiseptic|topical.*anti.infective.*wound|topical.*antimicrobial.*wound", "First Aid"),
+]
+
+# ================================================================
+# GENERIEKE NAAM → categorie  (keyword-matching, brede dekking)
+# ================================================================
 GENERIC_MAP = [
-    # Pain & Fever
-    (r"\b(paracetamol|acetaminophen|ibuprofen|naproxen|aspirin|diclofenac|"
+    # Pain & Fever — breed: ook opiaten, combinaties
+    (r"acetaminophen|paracetamol|ibuprofen|naprox|aspirin|diclofenac|"
      r"celecoxib|meloxicam|ketoprofen|piroxicam|indomethacin|ketorolac|"
-     r"tramadol|codeine|oxycodone|hydrocodone|morphine|fentanyl|buprenorphine|"
-     r"methadone|hydromorphone|oxymorphone|tapentadol)\b", "Pain & Fever"),
+     r"tramadol|oxycodon|hydrocodon|codeine|morphine|fentanyl|buprenorphine|"
+     r"methadone|hydromorphone|oxymorphone|tapentadol|butorphanol|nalbuphine|"
+     r"pentazocine|meperidine|sufentanil|remifentanil|alfentanil", "Pain & Fever"),
     # Antibiotics
-    (r"\b(amoxicillin|amoxicilline|ampicillin|penicillin|azithromycin|"
-     r"clarithromycin|erythromycin|doxycycline|minocycline|tetracycline|"
-     r"ciprofloxacin|levofloxacin|moxifloxacin|ofloxacin|trimethoprim|"
-     r"sulfamethoxazole|metronidazole|clindamycin|vancomycin|linezolid|"
-     r"cephalexin|cefuroxime|ceftriaxone|cefdinir|nitrofurantoin|fosfomycin|"
-     r"rifampin|isoniazid|ethambutol|pyrazinamide)\b", "Antibiotics"),
+    (r"amoxicillin|ampicillin|penicillin|nafcillin|oxacillin|dicloxacillin|"
+     r"piperacillin|cephalexin|cefuroxime|ceftriaxone|cefdinir|cefadroxil|"
+     r"cefprozil|cefpodoxime|cefaclor|cefazolin|azithromycin|clarithromycin|"
+     r"erythromycin|doxycycline|minocycline|tetracycline|tigecycline|"
+     r"ciprofloxacin|levofloxacin|moxifloxacin|ofloxacin|gemifloxacin|"
+     r"trimethoprim|sulfamethoxazole|metronidazol|clindamycin|vancomycin|"
+     r"linezolid|nitrofurantoin|fosfomycin|rifampin|isoniazid|ethambutol|"
+     r"pyrazinamide|daptomycin|aztreonam|imipenem|meropenem|ertapenem|"
+     r"gentamicin|tobramycin|amikacin|streptomycin|neomycin.*systemic", "Antibiotics"),
     # Antivirals
-    (r"\b(acyclovir|valacyclovir|famciclovir|oseltamivir|zanamivir|"
-     r"tenofovir|emtricitabine|efavirenz|lopinavir|ritonavir|atazanavir|"
-     r"dolutegravir|bictegravir|sofosbuvir|ledipasvir|ribavirin|ganciclovir|"
-     r"valganciclovir|cidofovir|nirmatrelvir|molnupiravir)\b", "Antivirals"),
+    (r"acyclovir|valacyclovir|famciclovir|oseltamivir|zanamivir|baloxavir|"
+     r"tenofovir|emtricitabin|efavirenz|lopinavir|ritonavir|atazanavir|"
+     r"dolutegravir|bictegravir|raltegravir|elvitegravir|cobicistat|"
+     r"sofosbuvir|ledipasvir|velpatasvir|glecaprevir|pibrentasvir|"
+     r"ribavirin|ganciclovir|valganciclovir|cidofovir|foscarnet|"
+     r"nirmatrelvir|molnupiravir|remdesivir|adefovir|entecavir|lamivudine|"
+     r"abacavir|zidovudine|stavudine|didanosine", "Antivirals"),
     # Antifungals
-    (r"\b(fluconazole|itraconazole|voriconazole|posaconazole|ketoconazole|"
-     r"clotrimazole|miconazole|terbinafine|nystatin|amphotericin|"
-     r"griseofulvin|econazole|butoconazole)\b", "Antifungals"),
+    (r"fluconazole|itraconazole|voriconazole|posaconazole|ketoconazole|"
+     r"isavuconazole|clotrimazole|miconazole|terbinafine|nystatin|"
+     r"amphotericin|griseofulvin|econazole|butoconazole|terconazole|"
+     r"ciclopirox|tolnaftate|undecylenic|anidulafungin|caspofungin|micafungin", "Antifungals"),
     # Antiparasitics
-    (r"\b(metronidazole|tinidazole|ivermectin|mebendazole|albendazole|"
-     r"praziquantel|pyrantel|hydroxychloroquine|chloroquine|atovaquone|"
-     r"permethrin|lindane|spinosad)\b", "Antiparasitics"),
+    (r"ivermectin|mebendazole|albendazole|praziquantel|pyrantel|"
+     r"hydroxychloroquine|chloroquine|atovaquone|primaquine|mefloquine|"
+     r"permethrin|lindane|spinosad|malathion|pyrethrins|tinidazole|"
+     r"nitazoxanide|metronidazol.*parasit|miltefosine", "Antiparasitics"),
     # Allergy
-    (r"\b(loratadine|cetirizine|fexofenadine|levocetirizine|desloratadine|"
-     r"diphenhydramine|chlorpheniramine|hydroxyzine|azelastine|olopatadine|"
-     r"brompheniramine|clemastine|promethazine)\b", "Allergy"),
+    (r"loratadine|cetirizine|fexofenadine|levocetirizine|desloratadine|"
+     r"diphenhydramine|chlorpheniramine|hydroxyzine.*allerg|azelastine|"
+     r"olopatadine|brompheniramine|clemastine|promethazine|cyproheptadine|"
+     r"acrivastine|triprolidine|ketotifen|epinastine|alcaftadine", "Allergy"),
     # Cough & Cold
-    (r"\b(dextromethorphan|guaifenesin|pseudoephedrine|phenylephrine|"
-     r"xylometazoline|oxymetazoline|naphazoline|ipratropium|benzonatate|"
-     r"bromhexine|ambroxol|acetylcysteine)\b", "Cough & Cold"),
+    (r"dextromethorphan|guaifenesin|pseudoephedrine|phenylephrine|"
+     r"xylometazoline|oxymetazoline|naphazoline|ipratropium.*nasal|"
+     r"benzonatate|bromhexine|ambroxol|acetylcysteine|carbocisteine|"
+     r"codeine.*cough|hydrocodone.*cough|dihydrocodeine", "Cough & Cold"),
     # Lungs & Asthma
-    (r"\b(albuterol|salbutamol|levalbuterol|salmeterol|formoterol|"
-     r"tiotropium|ipratropium|budesonide|fluticasone|beclomethasone|"
-     r"mometasone|ciclesonide|montelukast|zafirlukast|theophylline|"
-     r"roflumilast|omalizumab|dupilumab|benralizumab)\b", "Lungs & Asthma"),
+    (r"albuterol|salbutamol|levalbuterol|salmeterol|formoterol|indacaterol|"
+     r"olodaterol|vilanterol|tiotropium|umeclidinium|aclidinium|glycopyrrolate.*pulm|"
+     r"ipratropium.*pulm|budesonide.*inhal|fluticasone.*inhal|beclomethasone|"
+     r"mometasone.*inhal|ciclesonide|montelukast|zafirlukast|zileuton|"
+     r"theophylline|aminophylline|roflumilast|omalizumab|mepolizumab|"
+     r"benralizumab|dupilumab.*asthm|tezepelumab", "Lungs & Asthma"),
     # Stomach & Intestine
-    (r"\b(omeprazole|pantoprazole|esomeprazole|lansoprazole|rabeprazole|"
-     r"ranitidine|famotidine|cimetidine|antacid|simethicone|loperamide|"
-     r"bismuth|metoclopramide|ondansetron|prochlorperazine|domperidone|"
-     r"docusate|bisacodyl|senna|lactulose|polyethylene glycol|macrogol|"
-     r"mesalazine|mesalamine|sulfasalazine|infliximab|vedolizumab)\b", "Stomach & Intestine"),
-    # Heart & Blood Pressure
-    (r"\b(amlodipine|lisinopril|losartan|valsartan|atenolol|metoprolol|"
-     r"carvedilol|bisoprolol|enalapril|ramipril|captopril|irbesartan|"
-     r"candesartan|olmesartan|telmisartan|hydrochlorothiazide|furosemide|"
-     r"spironolactone|digoxin|amiodarone|sotalol|diltiazem|verapamil|"
-     r"nifedipine|felodipine|hydralazine|minoxidil|clonidine|doxazosin|"
-     r"prazosin|sacubitril|ivabradine|eplerenone)\b", "Heart & Blood Pressure"),
+    (r"omeprazole|pantoprazole|esomeprazole|lansoprazole|rabeprazole|dexlansoprazole|"
+     r"ranitidine|famotidine|cimetidine|nizatidine|calcium.*antacid|"
+     r"aluminum hydroxide|magnesium hydroxide|sodium bicarbonate.*antacid|"
+     r"simethicone|loperamide|bismuth|metoclopramide|ondansetron|prochlorperazine|"
+     r"promethazine.*nausea|granisetron|dolasetron|palonosetron|aprepitant|"
+     r"docusate|bisacodyl|senna|lactulose|polyethylene glycol|lubiprostone|"
+     r"linaclotide|plecanatide|rifaximin|mesalamine|mesalazine|balsalazide|"
+     r"olsalazine|sulfasalazine.*gastro|budesonide.*gastro|hyoscyamine|"
+     r"dicyclomine|mebeverine|pancrelipase|ursodiol|cholestyramine.*gastro|"
+     r"tegaserod|alvimopan|methylnaltrexone|naloxegol", "Stomach & Intestine"),
+    # Heart & Blood Pressure — uitgebreid
+    (r"amlodipine|nifedipine|felodipine|nicardipine|isradipine|nisoldipine|"
+     r"lisinopril|enalapril|ramipril|captopril|benazepril|fosinopril|"
+     r"moexipril|perindopril|quinapril|trandolapril|"
+     r"losartan|valsartan|irbesartan|candesartan|olmesartan|telmisartan|"
+     r"eprosartan|azilsartan|"
+     r"metoprolol|atenolol|bisoprolol|carvedilol|propranolol|labetalol|"
+     r"nadolol|acebutolol|betaxolol|pindolol|sotalol.*cardiac|nebivolol|"
+     r"hydrochlorothiazide|chlorthalidone|indapamide|metolazone|furosemide|"
+     r"torsemide|bumetanide|spironolactone|eplerenone|triamterene|amiloride|"
+     r"digoxin|amiodarone|dronedarone|flecainide|propafenone|mexiletine|"
+     r"disopyramide|quinidine|procainamide|lidocaine.*cardiac|"
+     r"diltiazem|verapamil.*cardiac|"
+     r"hydralazine|minoxidil.*systemic|isosorbide|nitroglycerin|"
+     r"clonidine|methyldopa|guanfacine|doxazosin|prazosin|terazosin|"
+     r"sacubitril|ivabradine|ranolazine|aliskiren|"
+     r"dopamine|dobutamine|milrinone|norepinephrine.*cardiac", "Heart & Blood Pressure"),
     # Cholesterol
-    (r"\b(atorvastatin|simvastatin|rosuvastatin|pravastatin|lovastatin|"
-     r"fluvastatin|pitavastatin|ezetimibe|fenofibrate|gemfibrozil|niacin|"
-     r"evolocumab|alirocumab|inclisiran|bempedoic)\b", "Cholesterol"),
+    (r"atorvastatin|simvastatin|rosuvastatin|pravastatin|lovastatin|"
+     r"fluvastatin|pitavastatin|cerivastatin|"
+     r"ezetimibe|fenofibrate|gemfibrozil|niacin.*lipid|"
+     r"evolocumab|alirocumab|inclisiran|bempedoic|"
+     r"colestipol|cholestyramine.*lipid|colesevelam|omega.3.*lipid", "Cholesterol"),
     # Anticoagulants
-    (r"\b(warfarin|heparin|enoxaparin|apixaban|rivaroxaban|dabigatran|"
-     r"edoxaban|clopidogrel|ticagrelor|prasugrel|aspirin.*\b81mg\b|"
-     r"dipyridamole|fondaparinux|argatroban|bivalirudin)\b", "Anticoagulants"),
+    (r"warfarin|heparin|enoxaparin|dalteparin|fondaparinux|tinzaparin|"
+     r"apixaban|rivaroxaban|dabigatran|edoxaban|betrixaban|"
+     r"clopidogrel|ticagrelor|prasugrel|ticlopidine|"
+     r"aspirin.*81|dipyridamole|vorapaxar|"
+     r"argatroban|bivalirudin|lepirudin|desirudin|"
+     r"alteplase|reteplase|tenecteplase|urokinase|streptokinase|"
+     r"cilostazol|pentoxifylline", "Anticoagulants"),
     # Diabetes
-    (r"\b(metformin|glipizide|glyburide|glimepiride|pioglitazone|"
-     r"rosiglitazone|sitagliptin|saxagliptin|linagliptin|alogliptin|"
-     r"empagliflozin|canagliflozin|dapagliflozin|liraglutide|semaglutide|"
-     r"exenatide|dulaglutide|insulin|acarbose|miglitol|repaglinide|"
-     r"nateglinide|tirzepatide)\b", "Diabetes"),
+    (r"metformin|glipizide|glyburide|glimepiride|glibenclamide|"
+     r"pioglitazone|rosiglitazone|"
+     r"sitagliptin|saxagliptin|linagliptin|alogliptin|vildagliptin|"
+     r"empagliflozin|canagliflozin|dapagliflozin|ertugliflozin|"
+     r"liraglutide|semaglutide|exenatide|dulaglutide|albiglutide|"
+     r"lixisenatide|tirzepatide|"
+     r"insulin|acarbose|miglitol|repaglinide|nateglinide|"
+     r"pramlintide|colesevelam.*diabetes", "Diabetes"),
     # Thyroid
-    (r"\b(levothyroxine|liothyronine|methimazole|propylthiouracil|"
-     r"thyroid|potassium iodide)\b", "Thyroid"),
+    (r"levothyroxine|liothyronine|liotrix|thyroid.*dessicated|"
+     r"methimazole|propylthiouracil|potassium iodide", "Thyroid"),
     # Corticosteroids
-    (r"\b(prednisone|prednisolone|methylprednisolone|dexamethasone|"
-     r"hydrocortisone|betamethasone|triamcinolone|fludrocortisone)\b", "Corticosteroids"),
-    # Neurology
-    (r"\b(levodopa|carbidopa|ropinirole|pramipexole|rasagiline|selegiline|"
-     r"donepezil|rivastigmine|galantamine|memantine|gabapentin|pregabalin|"
-     r"phenytoin|valproate|valproic acid|carbamazepine|oxcarbazepine|"
-     r"lamotrigine|topiramate|levetiracetam|zonisamide|lacosamide|"
-     r"eslicarbazepine|brivaracetam|perampanel|cenobamate)\b", "Neurology"),
+    (r"prednisone|prednisolone|methylprednisolone|dexamethasone|"
+     r"hydrocortisone|betamethasone|triamcinolone.*systemic|"
+     r"fludrocortisone|cortisone|deflazacort|budesonide.*systemic", "Corticosteroids"),
+    # Neurology — uitgebreid
+    (r"levodopa|carbidopa|ropinirole|pramipexole|rasagiline|selegiline|"
+     r"entacapone|tolcapone|apomorphine|amantadine.*parkinson|"
+     r"donepezil|rivastigmine|galantamine|memantine|"
+     r"gabapentin|pregabalin|phenytoin|fosphenytoin|valproate|valproic acid|"
+     r"carbamazepine|oxcarbazepine|lamotrigine|topiramate|levetiracetam|"
+     r"zonisamide|lacosamide|eslicarbazepine|brivaracetam|perampanel|"
+     r"cenobamate|rufinamide|vigabatrin|tiagabine|"
+     r"sumatriptan|rizatriptan|zolmitriptan|naratriptan|almotriptan|"
+     r"eletriptan|frovatriptan|ergotamine|dihydroergotamine|"
+     r"baclofen.*neuro|tizanidine|dantrolene.*spasm|"
+     r"riluzole|edaravone|nusinersen|risdiplam", "Neurology"),
     # Sleep & Sedation
-    (r"\b(zolpidem|zaleplon|eszopiclone|temazepam|triazolam|flurazepam|"
-     r"quazepam|diazepam|lorazepam|alprazolam|clonazepam|midazolam|"
-     r"buspirone|melatonin|ramelteon|suvorexant|lemborexant|doxepin)\b", "Sleep & Sedation"),
-    # Antidepressants
-    (r"\b(sertraline|fluoxetine|paroxetine|escitalopram|citalopram|"
-     r"venlafaxine|duloxetine|desvenlafaxine|levomilnacipran|bupropion|"
-     r"mirtazapine|amitriptyline|nortriptyline|imipramine|clomipramine|"
-     r"phenelzine|tranylcypromine|selegiline|trazodone|vilazodone|"
-     r"vortioxetine|fluvoxamine|lithium|aripiprazole|quetiapine.*depress)\b", "Antidepressants"),
+    (r"zolpidem|zaleplon|eszopiclone|triazolam|temazepam|flurazepam|"
+     r"quazepam|estazolam|"
+     r"diazepam|lorazepam|alprazolam|clonazepam|midazolam|"
+     r"chlordiazepoxide|oxazepam|clorazepate|"
+     r"buspirone|melatonin|ramelteon|suvorexant|lemborexant|"
+     r"hydroxyzine.*sleep|doxepin.*sleep|diphenhydramine.*sleep|"
+     r"chloral hydrate|phenobarbital", "Sleep & Sedation"),
+    # Antidepressants — uitgebreid met antipsychotica
+    (r"sertraline|fluoxetine|paroxetine|escitalopram|citalopram|fluvoxamine|"
+     r"venlafaxine|duloxetine|desvenlafaxine|levomilnacipran|"
+     r"bupropion|mirtazapine|trazodone|nefazodone|"
+     r"amitriptyline|nortriptyline|imipramine|desipramine|clomipramine|"
+     r"doxepin.*antidepr|trimipramine|protriptyline|"
+     r"phenelzine|tranylcypromine|isocarboxazid|selegiline.*antidepr|"
+     r"lithium|lamotrigine.*mood|"
+     r"quetiapine|aripiprazole|olanzapine|risperidone|paliperidone|"
+     r"ziprasidone|lurasidone|asenapine|iloperidone|brexpiprazole|"
+     r"cariprazine|lumateperone|haloperidol|chlorpromazine|thioridazine|"
+     r"fluphenazine|perphenazine|thiothixene|loxapine|molindone|"
+     r"clozapine|vilazodone|vortioxetine", "Antidepressants"),
     # Vitamins & Supplements
-    (r"\b(vitamin [abcdedk]|thiamine|riboflavin|niacin|folic acid|"
-     r"cyanocobalamin|ascorbic acid|cholecalciferol|ergocalciferol|"
-     r"tocopherol|phytonadione|ferrous|iron|calcium|zinc|magnesium|"
-     r"potassium|sodium|electrolyte|multivitamin)\b", "Vitamins & Supplements"),
+    (r"vitamin a|vitamin b|vitamin c|vitamin d|vitamin e|vitamin k|"
+     r"thiamine|riboflavin|niacin.*vitamin|pyridoxine|biotin|pantothenic|"
+     r"folic acid|cyanocobalamin|hydroxocobalamin|methylcobalamin|"
+     r"ascorbic acid|cholecalciferol|ergocalciferol|tocopherol|phytonadione|"
+     r"ferrous|ferric|iron.*supplement|polysaccharide iron|"
+     r"calcium carb|calcium cit|calcium gluc|calcium lact|"
+     r"zinc.*supplement|magnesium.*supplement|potassium.*supplement|"
+     r"selenium|chromium|manganese|copper.*supplement|iodine.*supplement|"
+     r"multivitamin|prenatal vitamin|electrolyte.*supplement|"
+     r"sodium fluoride.*supplement", "Vitamins & Supplements"),
     # Women's Health
-    (r"\b(ethinyl estradiol|estradiol|conjugated estrogen|medroxyprogesterone|"
-     r"levonorgestrel|norethindrone|desogestrel|drospirenone|etonogestrel|"
-     r"progesterone|clomiphene|letrozole|misoprostol|dinoprostone|oxytocin|"
-     r"mifepristone|ulipristal)\b", "Women's Health"),
+    (r"ethinyl estradiol|estradiol|conjugated estrogen|esterified estrogen|"
+     r"estrone|estriol|"
+     r"medroxyprogesterone|levonorgestrel|norethindrone|desogestrel|"
+     r"drospirenone|etonogestrel|norgestimate|norgestrel|"
+     r"progesterone|hydroxyprogesterone|"
+     r"clomiphene|letrozole.*fertility|gonadotropin|follitropin|"
+     r"misoprostol.*obstet|dinoprostone|oxytocin|carboprost|methylergonovine|"
+     r"mifepristone|ulipristal|"
+     r"raloxifene|ospemifene|bazedoxifene", "Women's Health"),
     # Urology
-    (r"\b(tamsulosin|alfuzosin|silodosin|doxazosin.*prostate|finasteride|"
-     r"dutasteride|oxybutynin|tolterodine|solifenacin|darifenacin|"
-     r"mirabegron|sildenafil|tadalafil|vardenafil|avanafil)\b", "Urology"),
+    (r"tamsulosin|alfuzosin|silodosin|doxazosin.*bph|terazosin.*bph|"
+     r"finasteride|dutasteride|"
+     r"sildenafil|tadalafil|vardenafil|avanafil|"
+     r"oxybutynin|tolterodine|solifenacin|darifenacin|fesoterodine|"
+     r"trospium|mirabegron|vibegron|"
+     r"bethanechol|flavoxate|phenazopyridine", "Urology"),
     # Oncology
-    (r"\b(tamoxifen|letrozole|anastrozole|exemestane|fulvestrant|"
-     r"imatinib|erlotinib|gefitinib|osimertinib|dasatinib|nilotinib|"
-     r"ibrutinib|venetoclax|bortezomib|lenalidomide|thalidomide|"
-     r"cyclophosphamide|methotrexate.*oncol|capecitabine|temozolomide|"
-     r"bevacizumab|rituximab|trastuzumab|pembrolizumab|nivolumab)\b", "Oncology"),
+    (r"tamoxifen|anastrozole|letrozole.*cancer|exemestane|fulvestrant|"
+     r"imatinib|erlotinib|gefitinib|osimertinib|afatinib|dacomitinib|"
+     r"dasatinib|nilotinib|ponatinib|bosutinib|"
+     r"ibrutinib|acalabrutinib|zanubrutinib|"
+     r"venetoclax|navitoclax|"
+     r"bortezomib|carfilzomib|ixazomib|"
+     r"lenalidomide|thalidomide|pomalidomide|"
+     r"cyclophosphamide|ifosfamide|melphalan|busulfan|"
+     r"methotrexate.*cancer|fluorouracil|capecitabine|gemcitabine|"
+     r"temozolomide|carmustine|lomustine|"
+     r"paclitaxel|docetaxel|cabazitaxel|"
+     r"irinotecan|topotecan|etoposide|"
+     r"pembrolizumab|nivolumab|atezolizumab|durvalumab|avelumab|"
+     r"ipilimumab|cemiplimab|"
+     r"bevacizumab|ramucirumab|sunitinib|sorafenib|regorafenib|"
+     r"palbociclib|ribociclib|abemaciclib|"
+     r"olaparib|niraparib|rucaparib|talazoparib|"
+     r"abiraterone|enzalutamide|darolutamide|apalutamide", "Oncology"),
     # Joints & Muscles
-    (r"\b(methotrexate|hydroxychloroquine|sulfasalazine|leflunomide|"
-     r"etanercept|adalimumab|tocilizumab|abatacept|baricitinib|"
-     r"tofacitinib|upadacitinib|colchicine|allopurinol|febuxostat|"
-     r"probenecid|cyclobenzaprine|methocarbamol|baclofen|tizanidine|"
-     r"carisoprodol|alendronate|risedronate|zoledronic|denosumab)\b", "Joints & Muscles"),
+    (r"methotrexate.*rheuma|hydroxychloroquine|sulfasalazine.*rheuma|"
+     r"leflunomide|etanercept|adalimumab|infliximab|golimumab|certolizumab|"
+     r"tocilizumab|sarilumab|abatacept|rituximab.*rheuma|"
+     r"baricitinib|tofacitinib|upadacitinib|filgotinib|"
+     r"colchicine|allopurinol|febuxostat|probenecid|rasburicase|pegloticase|"
+     r"cyclobenzaprine|methocarbamol|carisoprodol|orphenadrine|chlorzoxazone|"
+     r"baclofen.*muscle|tizanidine|dantrolene.*muscle|"
+     r"alendronate|risedronate|ibandronate|zoledronic|pamidronate|"
+     r"denosumab|teriparatide|abaloparatide|romosozumab|raloxifene.*bone|"
+     r"naproxen.*rheuma|diclofenac.*rheuma|celecoxib.*rheuma|"
+     r"indomethacin.*gout|sulindac", "Joints & Muscles"),
     # Skin & Wounds
-    (r"\b(tretinoin|adapalene|tazarotene|benzoyl peroxide|clindamycin.*topical|"
-     r"erythromycin.*topical|dapsone|isotretinoin|acitretin|"
-     r"tacrolimus.*topical|pimecrolimus|clobetasol|halobetasol|"
-     r"calcipotriene|coal tar|salicylic acid|urea.*topical|minoxidil.*topical)\b", "Skin & Wounds"),
+    (r"tretinoin|adapalene|tazarotene|trifarotene|"
+     r"benzoyl peroxide|salicylic acid.*topical|azelaic acid|"
+     r"clindamycin.*topical|erythromycin.*topical|dapsone.*topical|"
+     r"isotretinoin|acitretin|alitretinoin|"
+     r"clobetasol|halobetasol|betamethasone.*topical|mometasone.*topical|"
+     r"fluocinonide|triamcinolone.*topical|hydrocortisone.*topical|"
+     r"desonide|fluocinolone.*topical|alclometasone|"
+     r"tacrolimus.*topical|pimecrolimus|"
+     r"calcipotriene|calcitriol.*topical|"
+     r"mupirocin|fusidic acid|retapamulin|"
+     r"minoxidil.*topical|finasteride.*topical|"
+     r"imiquimod|podofilox|sinecatechins|"
+     r"ivermectin.*topical|permethrin.*topical|malathion.*topical|"
+     r"coal tar|anthralin|urea.*topical|lactic acid.*topical", "Skin & Wounds"),
     # Eye & Ear
-    (r"\b(latanoprost|timolol.*eye|bimatoprost|travoprost|dorzolamide|"
-     r"brimonidine|pilocarpine|ciprofloxacin.*eye|ofloxacin.*eye|"
-     r"tobramycin.*eye|gentamicin.*eye|neomycin.*ear|hydrocortisone.*ear|"
-     r"prednisolone.*eye|dexamethasone.*eye|fluorometholone|"
-     r"cyclopentolate|atropine.*eye|artificial tear)\b", "Eye & Ear"),
+    (r"latanoprost|bimatoprost|travoprost|tafluprost|unoprostone|"
+     r"timolol.*ophthal|betaxolol.*ophthal|carteolol.*ophthal|"
+     r"dorzolamide|brinzolamide|acetazolamide.*eye|"
+     r"brimonidine|apraclonidine|"
+     r"pilocarpine.*eye|echothiophate|"
+     r"ciprofloxacin.*ophthal|ofloxacin.*ophthal|moxifloxacin.*ophthal|"
+     r"levofloxacin.*ophthal|tobramycin.*ophthal|gentamicin.*ophthal|"
+     r"erythromycin.*ophthal|azithromycin.*ophthal|"
+     r"prednisolone.*ophthal|dexamethasone.*ophthal|fluorometholone|"
+     r"loteprednol|difluprednate|rimexolone|"
+     r"ketorolac.*ophthal|diclofenac.*ophthal|bromfenac|nepafenac|"
+     r"olopatadine.*ophthal|ketotifen.*ophthal|azelastine.*ophthal|"
+     r"epinastine|alcaftadine|bepotastine|"
+     r"cyclopentolate|tropicamide|atropine.*ophthal|"
+     r"artificial tear|hydroxypropyl|carboxymethylcellulose.*eye|"
+     r"hyaluronic acid.*eye|polyvinyl alcohol.*eye|"
+     r"neomycin.*otic|ciprofloxacin.*otic|ofloxacin.*otic|"
+     r"cortisporin.*otic|acetic acid.*otic|antipyrine.*otic", "Eye & Ear"),
     # First Aid
-    (r"\b(lidocaine|benzocaine|procaine|bupivacaine|ropivacaine|"
-     r"chlorhexidine|povidone.iodine|hydrogen peroxide|bacitracin|"
-     r"neomycin|polymyxin|silver sulfadiazine|mupirocin)\b", "First Aid"),
+    (r"lidocaine|benzocaine|prilocaine|tetracaine|bupivacaine|ropivacaine|"
+     r"procaine|mepivacaine|articaine|"
+     r"chlorhexidine|povidone.iodine|hydrogen peroxide.*topical|"
+     r"isopropyl alcohol.*topical|ethanol.*topical|"
+     r"bacitracin|polymyxin b.*topical|neomycin.*topical|"
+     r"silver sulfadiazine|mafenide|"
+     r"mupirocin|retapamulin.*topical|"
+     r"collagenase.*wound|becaplermin|"
+     r"benzalkonium|cetylpyridinium|thymol.*antisep", "First Aid"),
 ]
 
 BLACKLIST = re.compile(
-    r"\b(vaccine|vaccin|immunoglobulin|plasma|albumin|diagnostic|"
-     r"dressing|device|reagent|contrast media|radioactive|"
-     r"blood product|hemodialysis|peritoneal)\b", re.I
+    r"\b(vaccine|vaccin|immunoglobulin|antitoxin|antivenom|"
+    r"whole blood|packed red|platelet|plasma.*transfus|albumin.*transfus|"
+    r"diagnostic.*kit|in vitro|reagent|contrast.*media|radiolabel|radioactive|"
+    r"dialysis.*solution|peritoneal.*dialysis|"
+    r"veterinary|animal.*use|for animals)\b", re.I
 )
 
+# NDC_EXCLUDE_FLAG = 'Y' betekent uitgesloten van actieve marketing
+EXCLUDE_FLAG = re.compile(r"^Y$", re.I)
 
-def name_to_category(name):
-    """Generieke naam → categorie via brede keyword-matching."""
-    if not name:
-        return None
-    nl = name.lower()
-    for pattern, cat in GENERIC_MAP:
-        if re.search(pattern, nl, re.I):
-            return cat
+
+def pharm_class_to_cat(pharm_str):
+    if not pharm_str: return None
+    t = pharm_str.lower()
+    for pat, cat in PHARM_CLASS_MAP:
+        if re.search(pat, t): return cat
     return None
 
 
-def pharm_class_to_category(pharm_classes):
-    """
-    FDA PHARMACLASSCS string → categorie.
-    Bevat strings als "Proton Pump Inhibitor [EPC]",
-    "Nonsteroidal Anti-inflammatory Drug [EPC]", etc.
-    """
-    if not pharm_classes:
-        return None
-    text = " ".join(pharm_classes).lower() if isinstance(pharm_classes, list) else str(pharm_classes).lower()
-    map_pharm = [
-        (r"analgesic|pain|antipyretic|nonsteroidal anti.inflam|opioid|narcotic", "Pain & Fever"),
-        (r"antibacterial|antibiotic|penicillin|cephalosporin|macrolide|quinolone|tetracycline", "Antibiotics"),
-        (r"antiviral|antiretroviral|neuraminidase|reverse transcriptase", "Antivirals"),
-        (r"antifungal|azole|polyene", "Antifungals"),
-        (r"antiparasit|anthelmintic|antimalarial|antiprotozoal", "Antiparasitics"),
-        (r"antihistamine|histamine.*receptor.*antagonist", "Allergy"),
-        (r"decongestant|expectorant|antitussive|mucolytic", "Cough & Cold"),
-        (r"bronchodilator|beta.*agonist|anticholinergic.*pulmonary|leukotriene|corticosteroid.*pulmonary", "Lungs & Asthma"),
-        (r"proton pump|antacid|h2.*receptor|laxative|antidiarrheal|antiemetic|gastrointestinal motility", "Stomach & Intestine"),
-        (r"antihypertensive|beta.*blocker|ace.*inhibitor|angiotensin|calcium.*channel.*blocker|diuretic|vasodilator|cardiac glycoside", "Heart & Blood Pressure"),
-        (r"statin|hmg.coa|lipid.lowering|cholesterol", "Cholesterol"),
-        (r"anticoagulant|antiplatelet|thrombolytic|factor xa|thrombin inhibitor", "Anticoagulants"),
-        (r"antidiabetic|insulin|hypoglycemic|glp.1|sglt|dpp.4|incretin", "Diabetes"),
-        (r"thyroid|antithyroid", "Thyroid"),
-        (r"corticosteroid|glucocorticoid|mineralocorticoid", "Corticosteroids"),
-        (r"anticonvulsant|antiepileptic|anti.parkinson|dopamine.*agonist|cholinesterase", "Neurology"),
-        (r"sedative|hypnotic|anxiolytic|benzodiazepine|gaba.*agonist", "Sleep & Sedation"),
-        (r"antidepressant|ssri|snri|serotonin.*reuptake|monoamine", "Antidepressants"),
-        (r"vitamin|mineral|supplement|iron|folic|electrolyte", "Vitamins & Supplements"),
-        (r"contraceptive|estrogen|progestin|hormone.*replacement", "Women's Health"),
-        (r"alpha.*blocker.*urol|benign.*prostate|phosphodiesterase type 5", "Urology"),
-        (r"antineoplastic|chemotherapy|cytotoxic|kinase inhibitor|checkpoint inhibitor", "Oncology"),
-        (r"muscle.*relaxant|antigout|uricosuric|bisphosphonate|dmard", "Joints & Muscles"),
-        (r"topical.*dermatologic|retinoid|keratolytic", "Skin & Wounds"),
-        (r"ophthalmic|ocular|otic|glaucoma", "Eye & Ear"),
-        (r"local anesthetic|antiseptic|topical anti-infective", "First Aid"),
-    ]
-    for pattern, cat in map_pharm:
-        if re.search(pattern, text, re.I):
-            return cat
+def generic_to_cat(name):
+    if not name: return None
+    t = name.lower()
+    for pat, cat in GENERIC_MAP:
+        if re.search(pat, t): return cat
     return None
 
 
 def curl_download(url, dest, max_time=300):
-    cmd = [
-        "curl", "-L", "--max-time", str(max_time), "--connect-timeout", "20",
-        "--silent", "--fail",
-        "--user-agent", "Mozilla/5.0 apoHouze-updater/5.0",
-        "-o", dest, url,
-    ]
+    cmd = ["curl","-L","--max-time",str(max_time),"--connect-timeout","20",
+           "--silent","--fail","--user-agent","Mozilla/5.0 apoHouze-updater/5.0",
+           "-o",dest,url]
     for attempt in range(3):
         try:
-            subprocess.run(cmd, timeout=max_time + 15, check=True)
+            subprocess.run(cmd, timeout=max_time+15, check=True)
             size = os.path.getsize(dest)
-            print(f"  ✅ {size // 1024} KB gedownload")
+            print(f"  ✅ {size//1024} KB gedownload")
             return size
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
             print(f"  ⚠️  Poging {attempt+1}/3: {e}")
@@ -250,85 +366,89 @@ def curl_download(url, dest, max_time=300):
     return 0
 
 
-def process_ndc_product_txt(zip_path):
-    """
-    Verwerk de FDA NDC product.txt uit ndctext.zip.
-
-    Kolommen (tab-gescheiden, met header):
-      PRODUCTID, PRODUCTNDC, PRODUCTTYPENAME, PROPRIETARYNAME,
-      PROPRIETARYNAMESUFFIX, NONPROPRIETARYNAME, DOSAGEFORMNAME,
-      ROUTENAME, STARTMARKETINGDATE, ENDMARKETINGDATE,
-      MARKETINGCATEGORYNAME, APPLICATIONNUMBER, LABELERNAME,
-      SUBSTANCENAME, ACTIVE_NUMERATOR_STRENGTH, ACTIVE_INGRED_UNIT,
-      PHARM_CLASSES, DEASCHEDULE, NDC_EXCLUDE_FLAG, LISTING_RECORD_CERTIFIED_THROUGH
-    """
+def process_ndc(zip_path):
     print(f"  📦 ZIP openen ({os.path.getsize(zip_path)//1024} KB)...")
     with zipfile.ZipFile(zip_path, "r") as zf:
         names = zf.namelist()
         if DEBUG: print(f"  🔍 ZIP inhoud: {names}")
-        # Zoek product.txt (of Products.txt)
-        prod_name = next((n for n in names if "product" in n.lower() and n.lower().endswith(".txt")), None)
-        if not prod_name:
-            raise RuntimeError(f"product.txt niet gevonden in ZIP. Bestanden: {names}")
-        print(f"  📖 {prod_name} lezen...")
-        with zf.open(prod_name) as f:
+        prod = next((n for n in names if "product" in n.lower() and n.endswith(".txt")), None)
+        if not prod:
+            raise RuntimeError(f"product.txt niet gevonden. Bestanden: {names}")
+        print(f"  📖 {prod} lezen...")
+        with zf.open(prod) as f:
             content = f.read().decode("utf-8", errors="replace")
 
     reader = csv.DictReader(io.StringIO(content), delimiter="\t")
     rows = list(reader)
-    print(f"  📊 {len(rows)} rijen | Kolommen: {list(rows[0].keys())[:8] if rows else '?'}")
+    print(f"  📊 {len(rows)} rijen | kolommen: {list(rows[0].keys())[:6] if rows else '?'}")
 
-    results = []
-    seen = set()
-    sk_bl = 0; sk_cat = 0; sk_end = 0
+    seen     = set()
+    results  = []
+    sk_excl  = 0  # NDC_EXCLUDE_FLAG=Y
+    sk_bl    = 0  # blacklist
+    sk_cat   = 0  # geen categorie
+    sk_dup   = 0  # duplicaat
 
     for row in rows:
-        # Sla vervallen producten over
-        end_date = row.get("ENDMARKETINGDATE", "").strip()
-        if end_date and len(end_date) == 8:
-            # YYYYMMDD formaat
-            try:
-                import datetime
-                ed = datetime.datetime.strptime(end_date, "%Y%m%d")
-                if ed < datetime.datetime.now():
-                    sk_end += 1; continue
-            except ValueError:
-                pass
+        # Sla uit als NDC_EXCLUDE_FLAG = Y
+        if EXCLUDE_FLAG.match(row.get("NDC_EXCLUDE_FLAG","").strip()):
+            sk_excl += 1; continue
 
-        brand   = row.get("PROPRIETARYNAME", "").strip()
-        generic = row.get("NONPROPRIETARYNAME", "").strip()
-        name    = brand or generic
-        if not name: continue
+        brand   = (row.get("PROPRIETARYNAME") or "").strip()
+        suffix  = (row.get("PROPRIETARYNAMESUFFIX") or "").strip()
+        generic = (row.get("NONPROPRIETARYNAME") or "").strip()
+        form    = (row.get("DOSAGEFORMNAME") or "").strip()
+        pharm   = (row.get("PHARM_CLASSES") or "").strip()
+        dea     = (row.get("DEASCHEDULE") or "").strip()
+        mkt     = (row.get("MARKETINGCATEGORYNAME") or "").upper()
 
-        if BLACKLIST.search(name) or BLACKLIST.search(generic):
-            sk_bl += 1; continue
+        # Rx/OTC bepalen
+        rx = bool(dea) or ("OTC" not in mkt and "MONOGRAPH" not in mkt)
 
-        # Probeer categorie: eerst pharm_class, dan generieke naam
-        pharm = row.get("PHARM_CLASSES", "").strip()
-        pharm_list = [p.strip() for p in pharm.split(",")] if pharm else []
-        category = pharm_class_to_category(pharm_list) or name_to_category(generic) or name_to_category(name)
+        # Categorie: pharm_class eerst, dan generic name
+        category = pharm_class_to_cat(pharm) or generic_to_cat(generic) or generic_to_cat(brand)
         if not category:
             sk_cat += 1; continue
 
-        # Rx/OTC
-        mkt = row.get("MARKETINGCATEGORYNAME", "").upper()
-        dea = row.get("DEASCHEDULE", "").strip()
-        rx  = bool(dea) or "OTC" not in mkt
+        # Sla MERKNAAM op (als die bestaat en niet blacklisted)
+        if brand:
+            full_brand = f"{brand} {suffix}".strip() if suffix else brand
+            if not BLACKLIST.search(full_brand):
+                key = full_brand.lower()
+                if key not in seen:
+                    seen.add(key)
+                    results.append({
+                        "Name": full_brand, "INN": generic,
+                        "ATC": "", "PharmaceuticalForm": form,
+                        "RxStatus": "Rx" if rx else "OTC", "Country": "US",
+                    })
+                else:
+                    sk_dup += 1
+            else:
+                sk_bl += 1
 
-        form = row.get("DOSAGEFORMNAME", "").strip()
+        # Sla OOK GENERIEKE NAAM op (als die bestaat, anders dan merk, en niet blacklisted)
+        if generic and generic.lower() != brand.lower():
+            # Verwijder salt/ester suffixen voor dedup (maar bewaar de volledige naam)
+            if not BLACKLIST.search(generic):
+                key = generic.lower()
+                if key not in seen:
+                    seen.add(key)
+                    results.append({
+                        "Name": generic, "INN": generic,
+                        "ATC": "", "PharmaceuticalForm": form,
+                        "RxStatus": "Rx" if rx else "OTC", "Country": "US",
+                    })
+                else:
+                    sk_dup += 1
+            else:
+                sk_bl += 1
 
-        key = name.lower()
-        if key in seen: continue
-        seen.add(key)
-
-        results.append({
-            "Name": name, "INN": generic, "ATC": "",
-            "PharmaceuticalForm": form,
-            "RxStatus": "Rx" if rx else "OTC",
-            "Country": "US",
-        })
-
-    print(f"  ✅ {len(results)} uniek | {sk_cat} geen categorie | {sk_bl} blacklist | {sk_end} vervallen")
+    print(f"  ✅ {len(results)} entries")
+    print(f"     Uitgesloten (NDC_EXCLUDE_FLAG): {sk_excl}")
+    print(f"     Geen categorie: {sk_cat}")
+    print(f"     Blacklist: {sk_bl}")
+    print(f"     Duplicaten: {sk_dup}")
     return results
 
 
@@ -336,45 +456,39 @@ def save_csv(rows):
     fields = ["Name","INN","ATC","PharmaceuticalForm","RxStatus","Country"]
     with open(OUTPUT_FILE,"w",newline="",encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
-        w.writeheader()
-        for r in rows:
-            w.writerow(r)
+        w.writeheader(); w.writerows(rows)
     print(f"\n✅ {len(rows)} medicijnen opgeslagen → {OUTPUT_FILE}")
 
 
 def main():
-    print("🇺🇸 apoHouze — Verenigde Staten Medicijnen Fetcher v2")
+    print("🇺🇸 apoHouze — Verenigde Staten Medicijnen Fetcher v3")
     print("=" * 54)
-    print("📌 Bron: FDA NDC Directory flat files (ndctext.zip)\n")
+    print("📌 Bron: FDA NDC Directory (ndctext.zip)\n")
 
     dest = os.path.join(TMP_DIR, "us_ndctext.zip")
-
-    print("[1/3] FDA NDC flat files downloaden...")
-    downloaded = False
+    print("[1/3] Downloaden...")
+    ok = False
     for url in FDA_NDC_URLS:
         print(f"  📥 {url}")
         size = curl_download(url, dest)
         if size > 100_000:
-            downloaded = True
-            break
-        print(f"  ⚠️  Te klein ({size}B), volgende proberen...")
+            ok = True; break
+        print(f"  ⚠️  Te klein ({size}B)")
+    if not ok:
+        print("❌ Download mislukt"); sys.exit(1)
 
-    if not downloaded:
-        print("❌ FDA NDC download mislukt — alle URLs geprobeerd")
-        sys.exit(1)
-
-    print(f"\n[2/3] product.txt verwerken...")
+    print(f"\n[2/3] Verwerken...")
     try:
-        results = process_ndc_product_txt(dest)
+        results = process_ndc(dest)
     except Exception as e:
-        print(f"❌ Verwerking mislukt: {e}")
+        print(f"❌ Fout: {e}")
         import traceback; traceback.print_exc()
         sys.exit(1)
 
     if not results:
-        print("❌ Geen geldige medicijnen gevonden"); sys.exit(1)
+        print("❌ Geen resultaten"); sys.exit(1)
 
-    print(f"\n[3/3] Opslaan ({len(results)} unieke producten)...")
+    print(f"\n[3/3] Opslaan...")
     save_csv(results)
 
 

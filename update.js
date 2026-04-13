@@ -442,6 +442,72 @@ async function updateCA() {
 }
 
 // ================================================================
+// FRANKRIJK — ANSM Base de Données Publique des Médicaments (BDPM)
+// Maandelijks bijgewerkt, directe download zonder authenticatie.
+// Bestanden: CIS_bdpm.txt (merknamen) + CIS_COMPO_bdpm.txt (INN)
+// ================================================================
+async function updateFR() {
+  console.log('\n🇫🇷 Frankrijk — ANSM BDPM ophalen...');
+  const country = loadExistingNames('fr');
+  if (!country) { console.error('  ❌ fr.js niet gevonden'); return 0; }
+
+  const { execSync } = require('child_process');
+  const script = path.join(__dirname, 'fetch_fr_medicines.py');
+  if (!fs.existsSync(script)) { console.error('  ❌ fetch_fr_medicines.py niet gevonden'); return 0; }
+
+  let python = 'python3';
+  try { execSync('python3 --version', { stdio: 'ignore' }); }
+  catch { try { execSync('python --version', { stdio: 'ignore' }); python = 'python'; } catch { console.error('  ❌ Python niet gevonden'); return 0; } }
+
+  console.log('  🐍 Python fetch script uitvoeren...');
+  try {
+    execSync(`${python} "${script}"`, { stdio: 'inherit', timeout: 300_000, cwd: __dirname });
+  } catch (e) {
+    console.error(`  ❌ Script mislukt: ${e.message}`); return 0;
+  }
+
+  const dest = path.join(TMP_DIR, 'fr_medicines.csv');
+  if (!fs.existsSync(dest)) { console.error('  ❌ fr_medicines.csv niet aangemaakt'); return 0; }
+  const size = fs.statSync(dest).size;
+  if (size < 1000) { console.error(`  ❌ CSV te klein: ${size}B`); return 0; }
+  console.log(`  ✅ CSV gereed: ${(size/1024).toFixed(0)} KB`);
+  return parseFile(dest, 'fr', country);
+}
+
+// ================================================================
+// ITALIË — AIFA Transparency List + AIC Register
+// AIFA publiceert maandelijks een CSV van alle vergunde medicijnen
+// met ATC-codes, merknamen en prijsklassen.
+// ================================================================
+async function updateIT() {
+  console.log('\n🇮🇹 Italië — AIFA Transparency List ophalen...');
+  const country = loadExistingNames('it');
+  if (!country) { console.error('  ❌ it.js niet gevonden'); return 0; }
+
+  const { execSync } = require('child_process');
+  const script = path.join(__dirname, 'fetch_it_medicines.py');
+  if (!fs.existsSync(script)) { console.error('  ❌ fetch_it_medicines.py niet gevonden'); return 0; }
+
+  let python = 'python3';
+  try { execSync('python3 --version', { stdio: 'ignore' }); }
+  catch { try { execSync('python --version', { stdio: 'ignore' }); python = 'python'; } catch { console.error('  ❌ Python niet gevonden'); return 0; } }
+
+  console.log('  🐍 Python fetch script uitvoeren...');
+  try {
+    execSync(`${python} "${script}"`, { stdio: 'inherit', timeout: 300_000, cwd: __dirname });
+  } catch (e) {
+    console.error(`  ❌ Script mislukt: ${e.message}`); return 0;
+  }
+
+  const dest = path.join(TMP_DIR, 'it_medicines.csv');
+  if (!fs.existsSync(dest)) { console.error('  ❌ it_medicines.csv niet aangemaakt'); return 0; }
+  const size = fs.statSync(dest).size;
+  if (size < 1000) { console.error(`  ❌ CSV te klein: ${size}B`); return 0; }
+  console.log(`  ✅ CSV gereed: ${(size/1024).toFixed(0)} KB`);
+  return parseFile(dest, 'it', country);
+}
+
+// ================================================================
 // HOOFD
 // ================================================================
 async function main() {
@@ -462,7 +528,9 @@ async function main() {
     else if (target === 'gb') added = await updateGB();
     else if (target === 'us') added = await updateUS();
     else if (target === 'ca') added = await updateCA();
-    else { console.log(`⚠️  Onbekend land: ${target} (ondersteund: be, nl, de, gb, us, ca)`); continue; }
+    else if (target === 'fr') added = await updateFR();
+    else if (target === 'it') added = await updateIT();
+    else { console.log(`⚠️  Onbekend land: ${target} (ondersteund: be, nl, de, gb, us, ca, fr, it)`); continue; }
 
     const after = loadExistingNames(target)?.names.size || 0;
     log.results[target] = { before, after, added: after - before };

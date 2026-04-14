@@ -18367,6 +18367,18 @@ const MEDICINES = [
   { name: "Dyural L Kit", generic: "Methylprednisolone Acetate", category: "KIT", form: "Tablet", rx: false },
   { name: "BLT-25 Kit", generic: "Bupivacaine Hydrochloride", category: "KIT", form: "Tablet", rx: false },
 
+  { name: "Daytime Mucus Relief Severe Congestion and Cough and Nighttime Cold and Flu Maximum Strength", generic: "Dextromethorphan HBr", category: "Phenylephrine HCl", form: "Tablet", rx: false },
+  { name: "TheraCare 2X Medicated Pain Relief", generic: "LIDOCAINE", category: "US", form: "Tablet", rx: false },
+  { name: "Benzonatate 200 mg", generic: "Benzonatate 200 mg", category: "US", form: "Capsule", rx: false },
+  { name: "Verdibliss HEMORRHOID RELIEF OINTMENTS", generic: "LIDOCAINE", category: "US", form: "Tablet", rx: false },
+  { name: "DayTime Mucus Relief Severe Cold and Nighttime Cold and Flu Maximum Strength", generic: "Daytime Acetaminophen", category: "Diphenhydramine HCI", form: "Tablet", rx: false },
+  { name: "Walgreens Lidocaine Pain Relieving Patch Assorted", generic: "Lidocaine", category: "First Aid", form: "Tablet", rx: false },
+  { name: "Crest Scope Original Clean Mint", generic: "Cetylpyridinium chloride", category: "First Aid", form: "Tablet", rx: false },
+  { name: "Dr. Simi Mucus Relief", generic: "Guaifenesin", category: "US", form: "Tablet", rx: false },
+  { name: "Daytime Nighttime", generic: "Acetaminophen Dextromethorphan HBr", category: "US", form: "Tablet", rx: false },
+  { name: "Benzonatate 100 mg", generic: "Benzonatate 100 mg", category: "US", form: "Capsule", rx: false },
+  { name: "Diclofenac Potassium 25 mg", generic: "Diclofenac Potassium 25 mg", category: "US", form: "Capsule", rx: false },
+
 ];
 
 const CATEGORIES = [

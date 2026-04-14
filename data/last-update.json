@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-13T17:57:16.082Z",
+  "updated_at": "2026-04-14T15:02:33.017Z",
   "dry_run": false,
   "results": {
     "be": {
@@ -13,9 +13,9 @@
       "added": 0
     },
     "de": {
-      "before": 6958,
+      "before": 6959,
       "after": 6959,
-      "added": 1
+      "added": 0
     },
     "gb": {
       "before": 32094,
@@ -23,9 +23,9 @@
       "added": 0
     },
     "us": {
-      "before": 3906,
-      "after": 18363,
-      "added": 14457
+      "before": 18363,
+      "after": 18374,
+      "added": 11
     },
     "ca": {
       "before": 10969,
@@ -38,9 +38,9 @@
       "added": 0
     },
     "it": {
-      "before": 3872,
-      "after": 8795,
-      "added": 4923
+      "before": 8795,
+      "after": 8806,
+      "added": 11
     }
   }
 }

@@ -8799,6 +8799,18 @@ const MEDICINES = [
   { name: "ZUGLIMET", generic: "METFORMINA", category: "Diabetes", form: "Tablet", rx: false },
   { name: "ZYVOXID", generic: "LINEZOLID", category: "Antibiotics", form: "Injection", rx: false },
 
+  { name: "EBASTINA MYLAN PHARMA", generic: "EBASTINA", category: "Allergy", form: "Dispersible tablet", rx: false },
+  { name: "ELETRIPTAN TEVA", generic: "ELETRIPTAN BROMIDRATO", category: "Pain & Fever", form: "Tablet", rx: false },
+  { name: "EZETIMIBE E SIMVASTATINA AUROBINDO", generic: "EZETIMIBE + SIMVASTATINA", category: "Cholesterol", form: "Tablet", rx: false },
+  { name: "AMLODIPINA + IDROCLOROTIAZIDE + OLMESARTAN MEDOXOMIL", generic: "AMLODIPINA + IDROCLOROTIAZIDE + OLMESARTAN MEDOXOMIL", category: "Heart & Blood Pressure", form: "Tablet", rx: false },
+  { name: "LATTULOSIO AUROBINDO", generic: "LATTULOSIO", category: "Stomach & Intestine", form: "Tablet", rx: false },
+  { name: "NAPROSSENE EG", generic: "NAPROXENE", category: "Pain & Fever", form: "Tablet", rx: false },
+  { name: "POLITRATE", generic: "LEUPRORELINA ACETATO", category: "Oncology", form: "Tablet", rx: false },
+  { name: "LEUPRORELINA ACETATO", generic: "LEUPRORELINA ACETATO", category: "Oncology", form: "Tablet", rx: false },
+  { name: "SODERM", generic: "BETAMETASONE", category: "Corticosteroids", form: "Tablet", rx: false },
+  { name: "SUVAMOD", generic: "AMLODIPINA + ROSUVASTATINA", category: "Cholesterol", form: "Capsule", rx: false },
+  { name: "TADALAFIL ABC", generic: "TADALAFIL", category: "Urology", form: "Tablet", rx: false },
+
 ];
 
 const CATEGORIES = [

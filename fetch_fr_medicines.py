@@ -348,6 +348,7 @@ def main():
             "PharmaceuticalForm": form,
             "RxStatus": "Rx" if rx else "OTC",
             "Country": "FR",
+            "Category": category,  # parseFile gebruikt Category als ATC ontbreekt
         })
 
     print(f"\n  ✅ {len(results)} medicijnen")
@@ -359,7 +360,7 @@ def main():
     if not results:
         print("❌ Geen resultaten"); sys.exit(1)
 
-    fields = ["Name","INN","ATC","PharmaceuticalForm","RxStatus","Country"]
+    fields = ["Name","INN","ATC","PharmaceuticalForm","RxStatus","Country","Category"]
     with open(OUTPUT_FILE,"w",newline="",encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         w.writeheader(); w.writerows(results)

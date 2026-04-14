@@ -58,6 +58,38 @@ function atcToCategory(atc) {
   return ATC_MAP[atc.trim().substring(0, 3).toUpperCase()] || null;
 }
 
+// Naam-gebaseerde keyword fallback voor landen zonder ATC (BE-OTC, FR zonder ATC, etc.)
+function guessCategory(name) {
+  if (!name) return null;
+  const n = name.toLowerCase();
+  if (/paracetamol|ibuprofen|aspirin|naprox|diclofenac|ketoprofen|tramadol|codeine|oxycodon|fentanyl|morphine/.test(n)) return 'Pain & Fever';
+  if (/amoxicillin|azithromycin|ciprofloxacin|doxycyclin|metronidazol|clindamycin|cephalexin|nitrofurantoin|levofloxacin|clarithromycin|penicillin/.test(n)) return 'Antibiotics';
+  if (/aciclovir|valaciclovir|oseltamivir|tenofovir|emtricitabin|lopinavir|ritonavir|dolutegravir/.test(n)) return 'Antivirals';
+  if (/fluconazol|clotrimazol|miconazol|terbinafin|nystatin|amphotericin|ketoconazol/.test(n)) return 'Antifungals';
+  if (/loratadin|cetirizin|fexofenadine|levocetirizin|desloratadin|diphenhydramin|hydroxyzine|chlorpheniramin/.test(n)) return 'Allergy';
+  if (/dextromethorphan|guaifenesin|pseudoephedrin|phenylephrin|oxymetazolin|xylometazolin|bromhexin|ambroxol|acetylcysteine/.test(n)) return 'Cough & Cold';
+  if (/salbutamol|albuterol|salmeterol|formoterol|tiotropium|budesonide|fluticason|montelukast|theophyllin/.test(n)) return 'Lungs & Asthma';
+  if (/omeprazol|pantoprazol|esomeprazol|lansoprazol|rabeprazol|famotidin|ranitidine|loperamide|ondansetron|metoclopramide|domperidon/.test(n)) return 'Stomach & Intestine';
+  if (/amlodipine|lisinopril|losartan|metoprolol|atenolol|hydrochlorothiazid|furosemid|spironolacton|enalapril|ramipril|carvedilol|bisoprolol|valsartan|diltiazem|verapamil/.test(n)) return 'Heart & Blood Pressure';
+  if (/atorvastatin|simvastatin|rosuvastatin|pravastatin|ezetimibe|fenofibrat/.test(n)) return 'Cholesterol';
+  if (/warfarin|apixaban|rivaroxaban|clopidogrel|enoxaparin|dabigatran|heparin|ticagrelor/.test(n)) return 'Anticoagulants';
+  if (/metformin|insulin|empagliflozin|semaglutide|liraglutide|sitagliptin|glipizide|gliclazid/.test(n)) return 'Diabetes';
+  if (/levothyroxin|methimazol|propylthiouracil/.test(n)) return 'Thyroid';
+  if (/prednison|prednisolon|methylprednisolon|dexamethason|hydrocortison|betamethason/.test(n)) return 'Corticosteroids';
+  if (/gabapentin|pregabalin|levetiracetam|carbamazepin|lamotrigin|topiramat|valproat|phenytoin|levodopa|donepezil|memantine/.test(n)) return 'Neurology';
+  if (/zolpidem|alprazolam|lorazepam|diazepam|clonazepam|midazolam|oxazepam|temazepam|zopiclone/.test(n)) return 'Sleep & Sedation';
+  if (/sertralin|fluoxetin|paroxetin|escitalopram|citalopram|venlafaxin|bupropion|mirtazapin|amitriptylin|quetiapine|aripiprazol|olanzapin|risperidon|lithium/.test(n)) return 'Antidepressants';
+  if (/vitamin|multivitamin|folic|foliumzuur|ijzer|ferr|calcium|zink|magnesium|cholecalciferol/.test(n)) return 'Vitamins & Supplements';
+  if (/estradiol|levonorgestrel|ethinyl|norethisteron|progesteron|desogestrel|drospirenon/.test(n)) return "Women's Health";
+  if (/tamsulosin|finasterid|sildenafil|tadalafil|oxybutynin|tolterodine/.test(n)) return 'Urology';
+  if (/tamoxifen|anastrozol|imatinib|cyclophosphamide|methotrexaat.*kanker/.test(n)) return 'Oncology';
+  if (/allopurinol|colchicin|cyclobenzaprin|baclofen|alendronaat|methocarbamol/.test(n)) return 'Joints & Muscles';
+  if (/tretinoin|clobetasol|betamethason.*crème|tacrolimus.*crème|calcipotriol|mupirocin|minoxidil/.test(n)) return 'Skin & Wounds';
+  if (/latanoprost|timolol.*oog|dorzolamide|brimonidine|ciproflox.*oog|tobramycin.*oog|kunsttranen/.test(n)) return 'Eye & Ear';
+  if (/lidocaine|benzocaine|chlorhexidine|povidon.*jood|bacitracin|mupirocin.*wond/.test(n)) return 'First Aid';
+  return null;
+}
+
 // ================================================================
 // VORM MAPPING
 // ================================================================
@@ -184,7 +216,10 @@ function processRows(rows, country, code) {
 
     // Gebruik directe category-kolom als ATC leeg is (bv. US openFDA data)
     const directCat = catKey ? String(row[catKey] || '').trim() : '';
-    const category = atcToCategory(atc) || directCat || null;
+    // Fallback: probeer naam/INN keyword matching wanneer ATC en Category beide leeg zijn
+    const nameForCat = (inn || name || '').toLowerCase();
+    const keywordCat = !atcToCategory(atc) && !directCat ? guessCategory(nameForCat) : null;
+    const category = atcToCategory(atc) || directCat || keywordCat || null;
     if (!category) { skippedAtc++; continue; }
 
     const form = mapForm(formRaw);
@@ -511,6 +546,236 @@ async function updateIT() {
   return parseFile(dest, 'it', country);
 }
 
+
+async function updateAT() {
+  console.log('\n🇦🇹 Oostenrijk — EMA + nationale bron ophalen...');
+  const country = loadExistingNames('at');
+  if (!country) { console.error('  ❌ at.js niet gevonden'); return 0; }
+  const { execSync } = require('child_process');
+  const script = path.join(__dirname, 'fetch_eu_medicines.py');
+  if (!fs.existsSync(script)) { console.error('  ❌ fetch_eu_medicines.py niet gevonden'); return 0; }
+  let python = 'python3';
+  try { execSync('python3 --version', { stdio: 'ignore' }); }
+  catch { try { execSync('python --version', { stdio: 'ignore' }); python = 'python'; } catch { console.error('  ❌ Python niet gevonden'); return 0; } }
+  try {
+    execSync(`${python} "${script}" at`, { stdio: 'inherit', timeout: 300_000, cwd: __dirname });
+  } catch (e) {
+    console.error(`  ❌ Script mislukt: ${e.message}`); return 0;
+  }
+  const dest = path.join(TMP_DIR, 'at_medicines.csv');
+  if (!fs.existsSync(dest)) { console.error('  ❌ at_medicines.csv niet aangemaakt'); return 0; }
+  const size = fs.statSync(dest).size;
+  if (size < 1000) { console.error(`  ❌ CSV te klein: ${size}B`); return 0; }
+  console.log(`  ✅ CSV gereed: ${(size/1024).toFixed(0)} KB`);
+  return parseFile(dest, 'at', country);
+}
+
+async function updateCH() {
+  console.log('\n🇨🇭 Zwitserland — EMA + nationale bron ophalen...');
+  const country = loadExistingNames('ch');
+  if (!country) { console.error('  ❌ ch.js niet gevonden'); return 0; }
+  const { execSync } = require('child_process');
+  const script = path.join(__dirname, 'fetch_eu_medicines.py');
+  if (!fs.existsSync(script)) { console.error('  ❌ fetch_eu_medicines.py niet gevonden'); return 0; }
+  let python = 'python3';
+  try { execSync('python3 --version', { stdio: 'ignore' }); }
+  catch { try { execSync('python --version', { stdio: 'ignore' }); python = 'python'; } catch { console.error('  ❌ Python niet gevonden'); return 0; } }
+  try {
+    execSync(`${python} "${script}" ch`, { stdio: 'inherit', timeout: 300_000, cwd: __dirname });
+  } catch (e) {
+    console.error(`  ❌ Script mislukt: ${e.message}`); return 0;
+  }
+  const dest = path.join(TMP_DIR, 'ch_medicines.csv');
+  if (!fs.existsSync(dest)) { console.error('  ❌ ch_medicines.csv niet aangemaakt'); return 0; }
+  const size = fs.statSync(dest).size;
+  if (size < 1000) { console.error(`  ❌ CSV te klein: ${size}B`); return 0; }
+  console.log(`  ✅ CSV gereed: ${(size/1024).toFixed(0)} KB`);
+  return parseFile(dest, 'ch', country);
+}
+
+async function updateDK() {
+  console.log('\n🇩🇰 Denemarken — EMA + nationale bron ophalen...');
+  const country = loadExistingNames('dk');
+  if (!country) { console.error('  ❌ dk.js niet gevonden'); return 0; }
+  const { execSync } = require('child_process');
+  const script = path.join(__dirname, 'fetch_eu_medicines.py');
+  if (!fs.existsSync(script)) { console.error('  ❌ fetch_eu_medicines.py niet gevonden'); return 0; }
+  let python = 'python3';
+  try { execSync('python3 --version', { stdio: 'ignore' }); }
+  catch { try { execSync('python --version', { stdio: 'ignore' }); python = 'python'; } catch { console.error('  ❌ Python niet gevonden'); return 0; } }
+  try {
+    execSync(`${python} "${script}" dk`, { stdio: 'inherit', timeout: 300_000, cwd: __dirname });
+  } catch (e) {
+    console.error(`  ❌ Script mislukt: ${e.message}`); return 0;
+  }
+  const dest = path.join(TMP_DIR, 'dk_medicines.csv');
+  if (!fs.existsSync(dest)) { console.error('  ❌ dk_medicines.csv niet aangemaakt'); return 0; }
+  const size = fs.statSync(dest).size;
+  if (size < 1000) { console.error(`  ❌ CSV te klein: ${size}B`); return 0; }
+  console.log(`  ✅ CSV gereed: ${(size/1024).toFixed(0)} KB`);
+  return parseFile(dest, 'dk', country);
+}
+
+async function updateES() {
+  console.log('\n🇪🇸 Spanje — EMA + nationale bron ophalen...');
+  const country = loadExistingNames('es');
+  if (!country) { console.error('  ❌ es.js niet gevonden'); return 0; }
+  const { execSync } = require('child_process');
+  const script = path.join(__dirname, 'fetch_eu_medicines.py');
+  if (!fs.existsSync(script)) { console.error('  ❌ fetch_eu_medicines.py niet gevonden'); return 0; }
+  let python = 'python3';
+  try { execSync('python3 --version', { stdio: 'ignore' }); }
+  catch { try { execSync('python --version', { stdio: 'ignore' }); python = 'python'; } catch { console.error('  ❌ Python niet gevonden'); return 0; } }
+  try {
+    execSync(`${python} "${script}" es`, { stdio: 'inherit', timeout: 300_000, cwd: __dirname });
+  } catch (e) {
+    console.error(`  ❌ Script mislukt: ${e.message}`); return 0;
+  }
+  const dest = path.join(TMP_DIR, 'es_medicines.csv');
+  if (!fs.existsSync(dest)) { console.error('  ❌ es_medicines.csv niet aangemaakt'); return 0; }
+  const size = fs.statSync(dest).size;
+  if (size < 1000) { console.error(`  ❌ CSV te klein: ${size}B`); return 0; }
+  console.log(`  ✅ CSV gereed: ${(size/1024).toFixed(0)} KB`);
+  return parseFile(dest, 'es', country);
+}
+
+async function updateFI() {
+  console.log('\n🇫🇮 Finland — EMA + nationale bron ophalen...');
+  const country = loadExistingNames('fi');
+  if (!country) { console.error('  ❌ fi.js niet gevonden'); return 0; }
+  const { execSync } = require('child_process');
+  const script = path.join(__dirname, 'fetch_eu_medicines.py');
+  if (!fs.existsSync(script)) { console.error('  ❌ fetch_eu_medicines.py niet gevonden'); return 0; }
+  let python = 'python3';
+  try { execSync('python3 --version', { stdio: 'ignore' }); }
+  catch { try { execSync('python --version', { stdio: 'ignore' }); python = 'python'; } catch { console.error('  ❌ Python niet gevonden'); return 0; } }
+  try {
+    execSync(`${python} "${script}" fi`, { stdio: 'inherit', timeout: 300_000, cwd: __dirname });
+  } catch (e) {
+    console.error(`  ❌ Script mislukt: ${e.message}`); return 0;
+  }
+  const dest = path.join(TMP_DIR, 'fi_medicines.csv');
+  if (!fs.existsSync(dest)) { console.error('  ❌ fi_medicines.csv niet aangemaakt'); return 0; }
+  const size = fs.statSync(dest).size;
+  if (size < 1000) { console.error(`  ❌ CSV te klein: ${size}B`); return 0; }
+  console.log(`  ✅ CSV gereed: ${(size/1024).toFixed(0)} KB`);
+  return parseFile(dest, 'fi', country);
+}
+
+async function updateIE() {
+  console.log('\n🇮🇪 Ierland — EMA + nationale bron ophalen...');
+  const country = loadExistingNames('ie');
+  if (!country) { console.error('  ❌ ie.js niet gevonden'); return 0; }
+  const { execSync } = require('child_process');
+  const script = path.join(__dirname, 'fetch_eu_medicines.py');
+  if (!fs.existsSync(script)) { console.error('  ❌ fetch_eu_medicines.py niet gevonden'); return 0; }
+  let python = 'python3';
+  try { execSync('python3 --version', { stdio: 'ignore' }); }
+  catch { try { execSync('python --version', { stdio: 'ignore' }); python = 'python'; } catch { console.error('  ❌ Python niet gevonden'); return 0; } }
+  try {
+    execSync(`${python} "${script}" ie`, { stdio: 'inherit', timeout: 300_000, cwd: __dirname });
+  } catch (e) {
+    console.error(`  ❌ Script mislukt: ${e.message}`); return 0;
+  }
+  const dest = path.join(TMP_DIR, 'ie_medicines.csv');
+  if (!fs.existsSync(dest)) { console.error('  ❌ ie_medicines.csv niet aangemaakt'); return 0; }
+  const size = fs.statSync(dest).size;
+  if (size < 1000) { console.error(`  ❌ CSV te klein: ${size}B`); return 0; }
+  console.log(`  ✅ CSV gereed: ${(size/1024).toFixed(0)} KB`);
+  return parseFile(dest, 'ie', country);
+}
+
+async function updateNO() {
+  console.log('\n🇳🇴 Noorwegen — EMA + nationale bron ophalen...');
+  const country = loadExistingNames('no');
+  if (!country) { console.error('  ❌ no.js niet gevonden'); return 0; }
+  const { execSync } = require('child_process');
+  const script = path.join(__dirname, 'fetch_eu_medicines.py');
+  if (!fs.existsSync(script)) { console.error('  ❌ fetch_eu_medicines.py niet gevonden'); return 0; }
+  let python = 'python3';
+  try { execSync('python3 --version', { stdio: 'ignore' }); }
+  catch { try { execSync('python --version', { stdio: 'ignore' }); python = 'python'; } catch { console.error('  ❌ Python niet gevonden'); return 0; } }
+  try {
+    execSync(`${python} "${script}" no`, { stdio: 'inherit', timeout: 300_000, cwd: __dirname });
+  } catch (e) {
+    console.error(`  ❌ Script mislukt: ${e.message}`); return 0;
+  }
+  const dest = path.join(TMP_DIR, 'no_medicines.csv');
+  if (!fs.existsSync(dest)) { console.error('  ❌ no_medicines.csv niet aangemaakt'); return 0; }
+  const size = fs.statSync(dest).size;
+  if (size < 1000) { console.error(`  ❌ CSV te klein: ${size}B`); return 0; }
+  console.log(`  ✅ CSV gereed: ${(size/1024).toFixed(0)} KB`);
+  return parseFile(dest, 'no', country);
+}
+
+async function updatePL() {
+  console.log('\n🇵🇱 Polen — EMA + nationale bron ophalen...');
+  const country = loadExistingNames('pl');
+  if (!country) { console.error('  ❌ pl.js niet gevonden'); return 0; }
+  const { execSync } = require('child_process');
+  const script = path.join(__dirname, 'fetch_eu_medicines.py');
+  if (!fs.existsSync(script)) { console.error('  ❌ fetch_eu_medicines.py niet gevonden'); return 0; }
+  let python = 'python3';
+  try { execSync('python3 --version', { stdio: 'ignore' }); }
+  catch { try { execSync('python --version', { stdio: 'ignore' }); python = 'python'; } catch { console.error('  ❌ Python niet gevonden'); return 0; } }
+  try {
+    execSync(`${python} "${script}" pl`, { stdio: 'inherit', timeout: 300_000, cwd: __dirname });
+  } catch (e) {
+    console.error(`  ❌ Script mislukt: ${e.message}`); return 0;
+  }
+  const dest = path.join(TMP_DIR, 'pl_medicines.csv');
+  if (!fs.existsSync(dest)) { console.error('  ❌ pl_medicines.csv niet aangemaakt'); return 0; }
+  const size = fs.statSync(dest).size;
+  if (size < 1000) { console.error(`  ❌ CSV te klein: ${size}B`); return 0; }
+  console.log(`  ✅ CSV gereed: ${(size/1024).toFixed(0)} KB`);
+  return parseFile(dest, 'pl', country);
+}
+
+async function updatePT() {
+  console.log('\n🇵🇹 Portugal — EMA + nationale bron ophalen...');
+  const country = loadExistingNames('pt');
+  if (!country) { console.error('  ❌ pt.js niet gevonden'); return 0; }
+  const { execSync } = require('child_process');
+  const script = path.join(__dirname, 'fetch_eu_medicines.py');
+  if (!fs.existsSync(script)) { console.error('  ❌ fetch_eu_medicines.py niet gevonden'); return 0; }
+  let python = 'python3';
+  try { execSync('python3 --version', { stdio: 'ignore' }); }
+  catch { try { execSync('python --version', { stdio: 'ignore' }); python = 'python'; } catch { console.error('  ❌ Python niet gevonden'); return 0; } }
+  try {
+    execSync(`${python} "${script}" pt`, { stdio: 'inherit', timeout: 300_000, cwd: __dirname });
+  } catch (e) {
+    console.error(`  ❌ Script mislukt: ${e.message}`); return 0;
+  }
+  const dest = path.join(TMP_DIR, 'pt_medicines.csv');
+  if (!fs.existsSync(dest)) { console.error('  ❌ pt_medicines.csv niet aangemaakt'); return 0; }
+  const size = fs.statSync(dest).size;
+  if (size < 1000) { console.error(`  ❌ CSV te klein: ${size}B`); return 0; }
+  console.log(`  ✅ CSV gereed: ${(size/1024).toFixed(0)} KB`);
+  return parseFile(dest, 'pt', country);
+}
+
+async function updateSE() {
+  console.log('\n🇸🇪 Zweden — EMA + nationale bron ophalen...');
+  const country = loadExistingNames('se');
+  if (!country) { console.error('  ❌ se.js niet gevonden'); return 0; }
+  const { execSync } = require('child_process');
+  const script = path.join(__dirname, 'fetch_eu_medicines.py');
+  if (!fs.existsSync(script)) { console.error('  ❌ fetch_eu_medicines.py niet gevonden'); return 0; }
+  let python = 'python3';
+  try { execSync('python3 --version', { stdio: 'ignore' }); }
+  catch { try { execSync('python --version', { stdio: 'ignore' }); python = 'python'; } catch { console.error('  ❌ Python niet gevonden'); return 0; } }
+  try {
+    execSync(`${python} "${script}" se`, { stdio: 'inherit', timeout: 300_000, cwd: __dirname });
+  } catch (e) {
+    console.error(`  ❌ Script mislukt: ${e.message}`); return 0;
+  }
+  const dest = path.join(TMP_DIR, 'se_medicines.csv');
+  if (!fs.existsSync(dest)) { console.error('  ❌ se_medicines.csv niet aangemaakt'); return 0; }
+  const size = fs.statSync(dest).size;
+  if (size < 1000) { console.error(`  ❌ CSV te klein: ${size}B`); return 0; }
+  console.log(`  ✅ CSV gereed: ${(size/1024).toFixed(0)} KB`);
+  return parseFile(dest, 'se', country);
+}
 // ================================================================
 // HOOFD
 // ================================================================
@@ -534,7 +799,17 @@ async function main() {
     else if (target === 'ca') added = await updateCA();
     else if (target === 'fr') added = await updateFR();
     else if (target === 'it') added = await updateIT();
-    else { console.log(`⚠️  Onbekend land: ${target} (ondersteund: be, nl, de, gb, us, ca, fr, it)`); continue; }
+    else if (target === 'at') added = await updateAT();
+    else if (target === 'ch') added = await updateCH();
+    else if (target === 'dk') added = await updateDK();
+    else if (target === 'es') added = await updateES();
+    else if (target === 'fi') added = await updateFI();
+    else if (target === 'ie') added = await updateIE();
+    else if (target === 'no') added = await updateNO();
+    else if (target === 'pl') added = await updatePL();
+    else if (target === 'pt') added = await updatePT();
+    else if (target === 'se') added = await updateSE();
+    else { console.log(`⚠️  Onbekend land: ${target}`); continue; }
 
     const after = loadExistingNames(target)?.names.size || 0;
     log.results[target] = { before, after, added: after - before };

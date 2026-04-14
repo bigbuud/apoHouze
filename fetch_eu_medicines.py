@@ -144,7 +144,9 @@ def fetch_ema(seen):
         key = name.lower()
         if key in seen: continue
         seen.add(key)
-        results.append({"Name":name,"INN":inn,"ATC":atc,"PharmaceuticalForm":"","RxStatus":"Rx","Country":COUNTRY})
+        results.append({"Name":name,"INN":inn,"ATC":atc,"PharmaceuticalForm":"",
+                        "RxStatus":"Rx","Country":COUNTRY,
+                        "Category":atc_category(atc) or ""})
     print(f"  ✅ {len(results)} EMA | {sk} overgeslagen")
     return results
 
@@ -480,9 +482,12 @@ def process_rows(rows, country, seen,
         key = display.lower()
         if key in seen: sk_dup+=1; continue
         seen.add(key)
+        cat = atc_category(atc) if atc else None
         results.append({"Name":display,"INN":inn,"ATC":atc,
                         "PharmaceuticalForm":form,
-                        "RxStatus":"Rx" if rx else "OTC","Country":country})
+                        "RxStatus":"Rx" if rx else "OTC",
+                        "Country":country,
+                        "Category":cat or ""})
     if DEBUG:
         print(f"  📊 {len(results)} | bl:{sk_bl} cat:{sk_cat} st:{sk_status} dup:{sk_dup}")
     return results
@@ -592,7 +597,7 @@ def main():
     if not all_results:
         print("❌ Geen resultaten"); sys.exit(1)
 
-    fields = ["Name","INN","ATC","PharmaceuticalForm","RxStatus","Country"]
+    fields = ["Name","INN","ATC","PharmaceuticalForm","RxStatus","Country","Category"]
     with open(OUTPUT_FILE,"w",newline="",encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
         w.writeheader(); w.writerows(all_results)

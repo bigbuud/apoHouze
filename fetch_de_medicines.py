@@ -169,7 +169,7 @@ def process_ema(medicines):
                 return k
         return None
 
-    name_key   = find([r"^medicine_name$", r"^medicine$", r"^name$", r"product"])
+    name_key   = find([r"^medicine_name$", r"name_of_medicine", r"^medicine$", r"^name$"])
     inn_key    = find([r"active_substance", r"\binn\b", r"generic"])
     atc_key    = find([r"^atc"])
     form_key   = find([r"pharmaceutical_form", r"\bform\b"])

@@ -190,13 +190,16 @@ def curl_download(url, dest, max_time=300):
 
 def process_bnf_csv(path):
     """
-    Verwerk NHSBSA BNF CSV.
+    Verwerk NHSBSA BNF CSV (versie 88 en 90).
 
-    Echte kolomnamen (lowercase gezocht):
-      BNF_CODE                     → 15-cijferig code
-      BNF_PRESENTATION_DESCR       → volledige naam (bv. "Amoxicillin 500mg capsules")
-      BNF_CHEMICAL_SUBSTANCE_DESCR → generieke naam (bv. "Amoxicillin")
-      BNF_PRODUCT_DESCR            → productnaam
+    Kolommen BNF v88/v90 (alle aanwezig per rij):
+      YEAR_MONTH, BNF_CHAPTER, BNF_CHAPTER_CODE,
+      BNF_SECTION, BNF_SECTION_CODE,
+      BNF_PARAGRAPH, BNF_PARAGRAPH_CODE,
+      BNF_SUBPARAGRAPH, BNF_SUBPARAGRAPH_CODE,
+      BNF_CHEMICAL_SUBSTANCE, BNF_CHEMICAL_SUBSTANCE_CODE,
+      BNF_PRODUCT, BNF_PRODUCT_CODE,
+      BNF_PRESENTATION, BNF_PRESENTATION_CODE
     """
     print(f"  📖 CSV lezen...")
     with open(path, "r", encoding="utf-8-sig", errors="replace") as f:
@@ -209,15 +212,33 @@ def process_bnf_csv(path):
     if not rows:
         raise RuntimeError("CSV is leeg")
 
-    # Normaliseer kolomnamen
+    # Normaliseer naar UPPERCASE voor consistente lookup
     def norm(d):
         return {k.strip().upper(): v for k, v in d.items()}
     rows = [norm(r) for r in rows]
 
-    if DEBUG and rows:
-        print(f"  🔍 Kolomnamen: {list(rows[0].keys())}")
-    else:
-        print(f"  📊 {len(rows)} rijen | Kolommen: {list(rows[0].keys())[:6]}")
+    all_cols = list(rows[0].keys())
+    print(f"  📊 {len(rows)} rijen | Kolommen: {all_cols[:6]}")
+
+    # Detecteer aanwezige kolommen
+    has_presentation = "BNF_PRESENTATION" in all_cols
+    has_chem         = "BNF_CHEMICAL_SUBSTANCE" in all_cols
+    has_pres_code    = "BNF_PRESENTATION_CODE" in all_cols
+    has_section_code = "BNF_SECTION_CODE" in all_cols
+    has_chapter_code = "BNF_CHAPTER_CODE" in all_cols
+
+    name_cols = ["BNF_PRESENTATION","BNF_PRODUCT","BNF_DESCRIPTION","BNF_PRESENTATION_DESCR","BNF_PRODUCT_DESCR"]
+    inn_cols  = ["BNF_CHEMICAL_SUBSTANCE","BNF_CHEMICAL_SUBSTANCE_DESCR","CHEMICAL_SUBSTANCE_DESCR"]
+    code_cols = ["BNF_PRESENTATION_CODE","BNF_CODE","BNF_SECTION_CODE","BNF_PARAGRAPH_CODE","BNF_CHAPTER_CODE"]
+
+    name_col = next((c for c in name_cols if c in all_cols), None)
+    inn_col  = next((c for c in inn_cols  if c in all_cols), None)
+    code_col = next((c for c in code_cols if c in all_cols), None)
+
+    print(f"  📋 naam:{name_col} inn:{inn_col} chapter:{has_chapter_code and 'BNF_CHAPTER_CODE'}")
+
+    if not name_col:
+        raise RuntimeError(f"Geen naam-kolom gevonden. Kolommen: {all_cols[:12]}")
 
     results = []
     skipped_bl  = 0
@@ -225,35 +246,30 @@ def process_bnf_csv(path):
     seen        = set()
 
     for row in rows:
-        # Flexibele kolomzoekstrategie — meerdere mogelijke namen
-        code = (row.get("BNF_CODE") or row.get("BNFCODE") or
-                row.get("BNF CODE") or "").strip()
+        name = (row.get(name_col) or "").strip()
+        inn  = (row.get(inn_col) or "").strip() if inn_col else ""
+        code = (row.get(code_col) or "").strip() if code_col else ""
 
-        # Naam: voorkeur voor volledige presentatienaam
-        name = (row.get("BNF_PRESENTATION_DESCR") or
-                row.get("BNF_PRODUCT_DESCR") or
-                row.get("BNF_PRESENTATION_NAME") or
-                row.get("BNF_DESCRIPTION") or
-                row.get("PRESENTATION_DESCR") or "").strip()
-
-        inn  = (row.get("BNF_CHEMICAL_SUBSTANCE_DESCR") or
-                row.get("CHEMICAL_SUBSTANCE_DESCR") or
-                row.get("BNF_CHEMICAL_SUBSTANCE") or "").strip()
-
-        if not name or not code:
+        # Pseudo-chapters 19-23 = dressings/appliances: skip
+        chapter = code[:2] if code else (row.get("BNF_CHAPTER_CODE") or "")[:2]
+        if chapter in ("19","20","21","22","23"):
+            skipped_cat += 1
             continue
 
-        # Filter hulpmiddelen
+        if not name:
+            continue
+
         if APPLIANCE_BLACKLIST.search(name):
             skipped_bl += 1
             continue
 
-        category = bnf_code_to_category(code)
+        # Categorie via sectie-code (4 cijfers) of hoofd (2 cijfers)
+        section = code[:4] if len(code) >= 4 else code
+        category = bnf_code_to_category(section) or bnf_code_to_category(chapter)
         if not category:
             skipped_cat += 1
             continue
 
-        # Deduplicatie op naam
         key = name.lower()
         if key in seen:
             continue
@@ -268,7 +284,7 @@ def process_bnf_csv(path):
             "Country":            "GB",
         })
 
-    print(f"  ✅ {len(results)} unieke medicijnen | {skipped_cat} geen categorie | {skipped_bl} blacklist")
+    print(f"  ✅ {len(results)} unieke medicijnen | ⛔ Appliances: {skipped_bl} | Geen categorie: {skipped_cat} | Pseudo chapters: {skipped_cat}")
     return results
 
 

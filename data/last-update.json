@@ -1,16 +1,16 @@
 {
-  "updated_at": "2026-04-14T15:47:07.061Z",
+  "updated_at": "2026-04-14T17:16:44.795Z",
   "dry_run": false,
   "results": {
     "be": {
-      "before": 11837,
+      "before": 12261,
       "after": 12261,
-      "added": 424
+      "added": 0
     },
     "nl": {
-      "before": 20055,
+      "before": 20138,
       "after": 20138,
-      "added": 83
+      "added": 0
     },
     "de": {
       "before": 6959,
@@ -18,79 +18,79 @@
       "added": 0
     },
     "gb": {
-      "before": 32094,
+      "before": 32150,
       "after": 32150,
-      "added": 56
+      "added": 0
     },
     "us": {
-      "before": 18374,
+      "before": 18402,
       "after": 18402,
-      "added": 28
+      "added": 0
     },
     "ca": {
-      "before": 10969,
+      "before": 10978,
       "after": 10978,
-      "added": 9
+      "added": 0
     },
     "fr": {
-      "before": 3895,
+      "before": 9517,
       "after": 9517,
-      "added": 5622
+      "added": 0
     },
     "it": {
-      "before": 8806,
+      "before": 8807,
       "after": 8807,
-      "added": 1
+      "added": 0
     },
     "at": {
-      "before": 3864,
-      "after": 5408,
-      "added": 1544
+      "before": 5408,
+      "after": 6948,
+      "added": 1540
     },
     "ch": {
-      "before": 3864,
-      "after": 5408,
-      "added": 1544
+      "before": 5408,
+      "after": 6948,
+      "added": 1540
     },
     "dk": {
       "before": 3860,
-      "after": 3860,
-      "added": 0
+      "after": 5400,
+      "added": 1540
     },
     "es": {
       "before": 3872,
-      "after": 3872,
-      "added": 0
+      "after": 5412,
+      "added": 1540
     },
     "fi": {
-      "before": 3864,
-      "after": 5408,
-      "added": 1544
+      "before": 5408,
+      "after": 6948,
+      "added": 1540
     },
     "ie": {
-      "before": 3864,
-      "after": 5408,
-      "added": 1544
+      "before": 5408,
+      "after": 6948,
+      "added": 1540
     },
     "no": {
-      "before": 3860,
-      "after": 5404,
-      "added": 1544
+      "before": 5404,
+      "after": 6944,
+      "added": 1540
     },
     "pl": {
-      "before": 3864,
-      "after": 5408,
-      "added": 1544
+      "before": 5408,
+      "after": 6948,
+      "added": 1540
     },
     "pt": {
-      "before": 3868,
-      "after": 5412,
-      "added": 1544
+      "before": 5412,
+      "after": 6952,
+      "added": 1540
     },
     "se": {
-      "before": 3864,
-      "after": 5408,
-      "added": 1544
+      "before": 5408,
+      "after": 6948,
+      "added": 1540
     }
   }
 }

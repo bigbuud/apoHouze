@@ -20156,6 +20156,8 @@ const MEDICINES = [
   { name: "Emvita 27 druppels", generic: "ANACARDIUM ORIENTALE#CALCIUM CARBONICUM HAHNEMANNI #CEREBRUM SUIS#HELLEBORUS NIGER#MANDRAGORA E RADICE SICCATA", category: "Vitamins & Supplements", form: "Drops", rx: false },
   { name: "Pregabaline Sandoz 75 mg harde capsules", generic: "PREGABALINE", category: "Neurology", form: "Capsule", rx: true },
 
+  { name: "Nitro \"Pohl\" Infus voor perfusorpompsystemen 1mg/ml, oplossing voor infusie", generic: "NITROGLYCERINE", category: "Heart & Blood Pressure", form: "Solution", rx: true },
+
 ];
 
 const CATEGORIES = [

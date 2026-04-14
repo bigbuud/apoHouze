@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       countries:
-        description: 'Landen: be, nl, de, gb, us, ca, fr, it of combinaties'
+        description: 'Landen: be nl de gb us ca fr it at ch dk es fi ie no pl pt se (of combinaties)'
         required: false
-        default: 'be nl de gb us ca fr it'
+        default: 'be nl de gb us ca fr it at ch dk es fi ie no pl pt se'
       dry_run:
         description: 'Dry run (alleen preview, geen bestanden aanpassen)'
         type: boolean
@@ -22,7 +22,7 @@ env:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     permissions:
       contents: write
 
@@ -48,7 +48,7 @@ jobs:
 
       - name: Update medicijndatabases
         run: |
-          COUNTRIES="${{ github.event.inputs.countries || 'be nl de gb' }}"
+          COUNTRIES="${{ github.event.inputs.countries || 'be nl de gb us ca fr it at ch dk es fi ie no pl pt se' }}"
           DRY="${{ github.event.inputs.dry_run || 'false' }}"
           if [ "$DRY" = "true" ]; then
             node update.js $COUNTRIES --dry-run

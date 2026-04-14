@@ -8811,6 +8811,8 @@ const MEDICINES = [
   { name: "SUVAMOD", generic: "AMLODIPINA + ROSUVASTATINA", category: "Cholesterol", form: "Capsule", rx: false },
   { name: "TADALAFIL ABC", generic: "TADALAFIL", category: "Urology", form: "Tablet", rx: false },
 
+  { name: "EMEA/H/C/005653", generic: "budesonide", category: "Lungs & Asthma", form: "Tablet", rx: false },
+
 ];
 
 const CATEGORIES = [

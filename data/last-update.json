@@ -1,16 +1,16 @@
 {
-  "updated_at": "2026-04-14T15:02:33.017Z",
+  "updated_at": "2026-04-14T15:47:07.061Z",
   "dry_run": false,
   "results": {
     "be": {
       "before": 11837,
-      "after": 11837,
-      "added": 0
+      "after": 12261,
+      "added": 424
     },
     "nl": {
       "before": 20055,
-      "after": 20055,
-      "added": 0
+      "after": 20138,
+      "added": 83
     },
     "de": {
       "before": 6959,
@@ -19,28 +19,78 @@
     },
     "gb": {
       "before": 32094,
-      "after": 32094,
-      "added": 0
+      "after": 32150,
+      "added": 56
     },
     "us": {
-      "before": 18363,
-      "after": 18374,
-      "added": 11
+      "before": 18374,
+      "after": 18402,
+      "added": 28
     },
     "ca": {
       "before": 10969,
-      "after": 10969,
-      "added": 0
+      "after": 10978,
+      "added": 9
     },
     "fr": {
       "before": 3895,
-      "after": 3895,
-      "added": 0
+      "after": 9517,
+      "added": 5622
     },
     "it": {
-      "before": 8795,
-      "after": 8806,
-      "added": 11
+      "before": 8806,
+      "after": 8807,
+      "added": 1
+    },
+    "at": {
+      "before": 3864,
+      "after": 5408,
+      "added": 1544
+    },
+    "ch": {
+      "before": 3864,
+      "after": 5408,
+      "added": 1544
+    },
+    "dk": {
+      "before": 3860,
+      "after": 3860,
+      "added": 0
+    },
+    "es": {
+      "before": 3872,
+      "after": 3872,
+      "added": 0
+    },
+    "fi": {
+      "before": 3864,
+      "after": 5408,
+      "added": 1544
+    },
+    "ie": {
+      "before": 3864,
+      "after": 5408,
+      "added": 1544
+    },
+    "no": {
+      "before": 3860,
+      "after": 5404,
+      "added": 1544
+    },
+    "pl": {
+      "before": 3864,
+      "after": 5408,
+      "added": 1544
+    },
+    "pt": {
+      "before": 3868,
+      "after": 5412,
+      "added": 1544
+    },
+    "se": {
+      "before": 3864,
+      "after": 5408,
+      "added": 1544
     }
   }
 }

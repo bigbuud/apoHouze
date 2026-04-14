@@ -10973,6 +10973,16 @@ const MEDICINES = [
   { name: "CALCIUM GLUCONATE INJECTION USP 10%", generic: "CALCIUM GLUCONATE", category: "Heart & Blood Pressure", form: "Solution", rx: false },
   { name: "ITOVEBI", generic: "INAVOLISIB", category: "Oncology", form: "Tablet", rx: false },
 
+  { name: "CODEINE CONTIN 200MG CONTROLLED RELEASE TAB", generic: "CODEINE (CODEINE MONOHYDRATE", category: "Pain & Fever", form: "Tablet", rx: false },
+  { name: "CODEINE CONTIN 100MG CONTROLLED RELEASE TAB", generic: "CODEINE (CODEINE MONOHYDRATE", category: "Pain & Fever", form: "Tablet", rx: false },
+  { name: "CODEINE CONTIN 150MG CONTROLLED RELEASE TAB", generic: "CODEINE (CODEINE MONOHYDRATE", category: "Pain & Fever", form: "Tablet", rx: false },
+  { name: "ACETAMINOPHEN", generic: "CAFFEINE AND CODEINE PHOSPHATE TABLETS", category: "Pain & Fever", form: "Tablet", rx: false },
+  { name: "CODEINE CONTIN 50MG CONTROLLED RELEASE TAB", generic: "CODEINE (CODEINE MONOHYDRATE", category: "Pain & Fever", form: "Tablet", rx: false },
+  { name: "BALANCE 1.5% GLUCOSE", generic: "1.25 MMOL/L CALCIUM", category: "Vitamins & Supplements", form: "Tablet", rx: false },
+  { name: "BALANCE 4.25% GLUCOSE", generic: "1.25 MMOL/L CALCIUM", category: "Vitamins & Supplements", form: "Tablet", rx: false },
+  { name: "BALANCE 2.3% GLUCOSE", generic: "1.25 MMOL/L CALCIUM", category: "Vitamins & Supplements", form: "Tablet", rx: false },
+  { name: "PMS-CIPROFLOXACIN XL", generic: "CIPROFLOXACIN (CIPROFLOXACIN", category: "Antibiotics", form: "Tablet", rx: false },
+
 ];
 
 const CATEGORIES = [

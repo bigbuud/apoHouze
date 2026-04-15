@@ -16,6 +16,41 @@ services:
       DB_PATH: /data/apohouze.db
       PORT: 3000
       NODE_ENV: production
-      # Set your country code here:
-      # BE, NL, DE, FR, ES, IT, CH, AT, DK, PL, NO, FI, SE, GB, IE, PT, US, CA
+
+      # ── Kies je landcode ──────────────────────────────────────────
+      #
+      # West-Europa
+      # BE  🇧🇪  België          – FAMHP / afmps.be
+      # NL  🇳🇱  Nederland       – CBG / geneesmiddeleninformatiebank.nl
+      # DE  🇩🇪  Duitsland       – BfArM / gelbe-liste.de
+      # FR  🇫🇷  Frankrijk       – ANSM / medicaments.gouv.fr
+      # ES  🇪🇸  Spanje          – AEMPS / cima.aemps.es
+      # IT  🇮🇹  Italië          – AIFA / farmaci.agenziafarmaco.it
+      # CH  🇨🇭  Zwitserland     – Swissmedic / swissmedicinfo.ch
+      # AT  🇦🇹  Oostenrijk      – BASG / ages.at
+      # LU  🇱🇺  Luxemburg       – Ministère Santé / sante.public.lu
+      #
+      # Noord-Europa
+      # GB  🇬🇧  Verenigd Koninkrijk – MHRA / bnf.nice.org.uk
+      # IE  🇮🇪  Ierland         – HPRA / hpra.ie
+      # DK  🇩🇰  Denemarken      – DKMA / produktresume.dk
+      # NO  🇳🇴  Noorwegen       – NoMA / felleskatalogen.no
+      # FI  🇫🇮  Finland         – Fimea / laakeinfo.fi
+      # SE  🇸🇪  Zweden          – MPA / fass.se
+      #
+      # Oost-Europa
+      # PL  🇵🇱  Polen           – URPL / rejestry.ezdrowie.gov.pl
+      # CZ  🇨🇿  Tsjechië        – SÚKL / opendata.sukl.cz
+      # SK  🇸🇰  Slowakije       – ŠÚKL / sukl.sk
+      # HU  🇭🇺  Hongarije       – OGYÉI / ogyei.gov.hu
+      # RO  🇷🇴  Roemenië        – ANMDMR / anm.ro
+      # HR  🇭🇷  Kroatië         – HALMED / halmed.hr
+      # SI  🇸🇮  Slovenië        – JAZMP / jazmp.si
+      # GR  🇬🇷  Griekenland     – EOF / eof.gr
+      # PT  🇵🇹  Portugal        – INFARMED / infarmed.pt
+      #
+      # Noord-Amerika
+      # US  🇺🇸  Verenigde Staten – FDA NDC / open.fda.gov
+      # CA  🇨🇦  Canada          – Health Canada DPD
+      #
       COUNTRY: BE

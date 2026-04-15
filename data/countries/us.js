@@ -18408,6 +18408,23 @@ const MEDICINES = [
   { name: "magnesium aluminosilicates", generic: "magnesium hydroxide", category: "Vitamins & Supplements", form: "Tablet", rx: false },
   { name: "Brompheniramine", generic: "Pseudoephedrine", category: "Cough & Cold", form: "Tablet", rx: false },
 
+  { name: "Signature Pain Relief Cream", generic: "4% Lidocaine", category: "First Aid", form: "Cream", rx: false },
+  { name: "Daytime Nighttime Sinus Relief Maximum Strength", generic: "Acetaminophen", category: "Doxylamine succinate", form: "Tablet", rx: false },
+  { name: "Hatmanlabs Vitamin D3 K2 with Coconut Oil 120 Softgels", generic: "Vitamin D3", category: "US", form: "Tablet", rx: false },
+  { name: "Daytime and Nighttime Cherry Cold and Flu", generic: "Daytime - Acetaminophen", category: "KIT", form: "Tablet", rx: false },
+  { name: "LidoTape", generic: "Lidocaine 4%", category: "First Aid", form: "Tablet", rx: false },
+  { name: "Daytime Severe and Nighttime Severe cold and flu", generic: "Daytime Severe - Acetaminophen", category: "Dextromethorphan HBr", form: "Tablet", rx: false },
+  { name: "Fexofenadine HCl 180 mg", generic: "Fexofenadine HCl", category: "Allergy", form: "Tablet", rx: false },
+  { name: "Daytime Nighttime Severe Cold and Flu", generic: "acetaminophen", category: "doxylamine succinate", form: "Tablet", rx: false },
+  { name: "BonicaEaseX Pain Relieving Lidocaine", generic: "LIDOCAINE", category: "First Aid", form: "Patch", rx: false },
+  { name: "Hydrocortisone Cream 1% with Aloe", generic: "Hydrocortisone Cream 1% with Aloe", category: "Corticosteroids", form: "Cream", rx: false },
+  { name: "Quali Life ANTIFUNGAL PERSIMMON", generic: "Tolnaftate", category: "Antifungals", form: "Tablet", rx: false },
+  { name: "Quali Life ANTIFUNGAL CHARCOAL", generic: "Tolnaftate", category: "Antifungals", form: "Tablet", rx: false },
+  { name: "KINGLY 4% LIDOCAINE PATCHES", generic: "4% LIDOCAINE", category: "First Aid", form: "Patch", rx: false },
+  { name: "COMPLETE ACID REDUCER", generic: "famotidine", category: "CHEWABLE", form: "Tablet", rx: false },
+  { name: "Hemorrhoidal Cream with Lidocaine", generic: "Glycerol", category: "CREAM", form: "Tablet", rx: false },
+  { name: "Glycerol", generic: "Phenylephine", category: "Pramoxine", form: "Tablet", rx: false },
+
 ];
 
 const CATEGORIES = [

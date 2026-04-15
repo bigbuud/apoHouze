@@ -20158,6 +20158,26 @@ const MEDICINES = [
 
   { name: "Nitro \"Pohl\" Infus voor perfusorpompsystemen 1mg/ml, oplossing voor infusie", generic: "NITROGLYCERINE", category: "Heart & Blood Pressure", form: "Solution", rx: true },
 
+  { name: "Sumatriptan Medcor 3 mg/0,5 ml oplossing voor injectie in voorgevulde pen", generic: "SUMATRIPTANSUCCINAAT", category: "Pain & Fever", form: "Injection", rx: true },
+  { name: "Rivaxa 2,5 mg filmomhulde tabletten", generic: "RIVAROXABAN", category: "Anticoagulants", form: "Tablet", rx: true },
+  { name: "Rivaxa 10 mg filmomhulde tabletten", generic: "RIVAROXABAN", category: "Anticoagulants", form: "Tablet", rx: true },
+  { name: "Rivaxa 20 mg filmomhulde tabletten", generic: "RIVAROXABAN", category: "Anticoagulants", form: "Tablet", rx: true },
+  { name: "Ropivacaïne HCl Hikma 10 mg/ml oplossing voor injectie", generic: "ROPIVACAÏNEHYDROCHLORIDE 1-WATER", category: "Pain & Fever", form: "Injection", rx: true },
+  { name: "Carboplatine Hikma 10 mg/ml concentraat voor oplossing voor infusie", generic: "CARBOPLATINE", category: "Oncology", form: "Solution", rx: true },
+  { name: "Ropivacaïne HCl Hikma 2 mg/ml oplossing voor injectie", generic: "ROPIVACAÏNEHYDROCHLORIDE 1-WATER", category: "Pain & Fever", form: "Injection", rx: true },
+  { name: "Decitabine EVER Pharma 50 mg poeder voor concentraat voor oplossing voor infusie", generic: "DECITABINE", category: "Oncology", form: "Powder", rx: true },
+  { name: "Ropivacaïne HCl Hikma 5 mg/ml oplossing voor injectie", generic: "ROPIVACAÏNEHYDROCHLORIDE 1-WATER", category: "Pain & Fever", form: "Injection", rx: true },
+  { name: "Ropivacaïne HCl Hikma 7,5 mg/ml oplossing voor injectie", generic: "ROPIVACAÏNEHYDROCHLORIDE 1-WATER", category: "Pain & Fever", form: "Injection", rx: true },
+  { name: "Rivaxa 15 mg filmomhulde tabletten", generic: "RIVAROXABAN", category: "Anticoagulants", form: "Tablet", rx: true },
+  { name: "Nitro \"Pohl\" Infus voor perfusorpompsystemen 1mg/ml, oplossing voor infusie", generic: "NITROGLYCERINE", category: "Heart & Blood Pressure", form: "Solution", rx: true },
+  { name: "EURneffy 1 mg neusspray, oplossing in verpakking voor eenmalig gebruik", generic: "ADRENALINE", category: "Heart & Blood Pressure", form: "Nasal spray", rx: true },
+  { name: "Brazier 24 mg/26 mg filmomhulde tabletten", generic: "SACUBITRIL NATRIUM#VALSARTAN DINATRIUM", category: "Heart & Blood Pressure", form: "Tablet", rx: true },
+  { name: "Hydrocortison Morningside 10 mg, tabletten", generic: "HYDROCORTISON", category: "Corticosteroids", form: "Tablet", rx: true },
+  { name: "Hydrocortison Morningside 20 mg, tabletten", generic: "HYDROCORTISON", category: "Corticosteroids", form: "Tablet", rx: true },
+  { name: "Vilanov 50 mg tabletten", generic: "VILDAGLIPTINE", category: "Diabetes", form: "Tablet", rx: true },
+  { name: "Rivaxa 15 mg + 20 mg filmomhulde tabletten", generic: "RIVAROXABAN#RIVAROXABAN", category: "Anticoagulants", form: "Tablet", rx: true },
+  { name: "Valdispert 45 mg, omhulde tabletten", generic: "VALERIANAE EXTRACTUM SICCUM (LN)", category: "Sleep & Sedation", form: "Tablet", rx: false },
+
 ];
 
 const CATEGORIES = [

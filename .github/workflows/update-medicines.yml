@@ -1,98 +1,51 @@
-# Voeg dit toe aan je bestaande .github/workflows/update-medicines.yml
-# onder de jobs sectie, OF voeg de nieuwe landen toe aan een bestaande matrix job
-
-# ============================================================
-# Optie A: Toevoegen aan bestaande matrix (aanbevolen)
-# ============================================================
-# Zoek in je huidige workflow naar iets als:
-#   matrix:
-#     country: [de, gb]
-# En breid uit naar:
-#   matrix:
-#     country: [de, gb, cz, sk, hr, si, hu, ro, gr, lu]
-
-# ============================================================
-# Optie B: Aparte job per land (als je geen matrix hebt)
-# ============================================================
-
 name: Update Medicines Data
 
 on:
   schedule:
-    - cron: '0 3 * * 0'   # elke zondag om 03:00 UTC
-  workflow_dispatch:        # ook handmatig triggerable
+    - cron: '0 3 * * 0'   # elke zondag 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      countries:
+        description: 'Landen om te updaten (spatie-gescheiden)'
+        required: false
+        default: 'be nl de gb fr it us ca at ch dk es fi ie no pl pt se cz sk hr si hu ro gr lu'
 
 jobs:
-  update-medicines:
+  update:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false      # doorgaan als één land faalt
-      matrix:
-        country:
-          # Bestaand
-          - code: de
-            script: fetch_de.py
-            description: "Germany (EMA JSON)"
-          - code: gb
-            script: fetch_gb.py
-            description: "UK (NHSBSA CKAN)"
-          # Nieuw — Prioriteit 1
-          - code: cz
-            script: fetch_cz.py
-            description: "Czech Republic (SÚKL open data)"
-          - code: sk
-            script: fetch_sk.py
-            description: "Slovakia (ŠÚKL)"
-          - code: hr
-            script: fetch_hr.py
-            description: "Croatia (HALMED)"
-          - code: si
-            script: fetch_si.py
-            description: "Slovenia (JAZMP)"
-          - code: hu
-            script: fetch_hu.py
-            description: "Hungary (OGYÉI)"
-          - code: ro
-            script: fetch_ro.py
-            description: "Romania (ANMDMR)"
-          - code: gr
-            script: fetch_gr.py
-            description: "Greece (EOF)"
-          - code: lu
-            script: fetch_lu.py
-            description: "Luxembourg (SAM/Ministry)"
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
-        run: |
-          pip install requests openpyxl --break-system-packages 2>/dev/null || \
-          pip install requests openpyxl
+      - name: Python dependencies installeren
+        run: pip install requests openpyxl
 
-      - name: Run fetch script for ${{ matrix.country.description }}
-        run: |
-          python scripts/${{ matrix.country.script }}
-        continue-on-error: true   # log fout maar stop workflow niet
+      - name: Node dependencies installeren
+        run: npm install
 
-      - name: Check output
+      - name: Landen bepalen
+        id: c
         run: |
-          if [ -f "data/medicines_${{ matrix.country.code }}.js" ]; then
-            echo "✅ ${{ matrix.country.code }}: $(wc -l < data/medicines_${{ matrix.country.code }}.js) lines"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "list=${{ github.event.inputs.countries }}" >> $GITHUB_OUTPUT
           else
-            echo "⚠️  ${{ matrix.country.code }}: geen output — check script en URL"
+            echo "list=be nl de gb fr it us ca at ch dk es fi ie no pl pt se cz sk hr si hu ro gr lu" >> $GITHUB_OUTPUT
           fi
 
-      - name: Commit updated data
+      - name: Medicijnen updaten
+        run: node update.js ${{ steps.c.outputs.list }}
+
+      - name: Bijgewerkte data committen
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: update medicines data (${{ matrix.country.code }})"
-          file_pattern: "data/medicines_${{ matrix.country.code }}.js"
+          commit_message: "chore: update medicines [skip ci]"
+          file_pattern: "data/countries/*.js data/last-update.json"
           commit_user_name: "apoHouze Bot"
           commit_user_email: "bot@apohoux.local"

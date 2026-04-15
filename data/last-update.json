@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-04-15T09:50:01.454Z",
+  "updated_at": "2026-04-15T12:08:51.765Z",
   "dry_run": false,
   "results": {
     "be": {
@@ -8,9 +8,9 @@
       "added": 0
     },
     "nl": {
-      "before": 20138,
+      "before": 20156,
       "after": 20156,
-      "added": 18
+      "added": 0
     },
     "de": {
       "before": 6959,
@@ -33,9 +33,9 @@
       "added": 0
     },
     "us": {
-      "before": 18402,
+      "before": 18418,
       "after": 18418,
-      "added": 16
+      "added": 0
     },
     "ca": {
       "before": 10978,
@@ -94,43 +94,43 @@
     },
     "cz": {
       "before": 0,
-      "after": 0,
-      "added": 0
+      "after": 1568,
+      "added": 1568
     },
     "sk": {
       "before": 0,
-      "after": 0,
-      "added": 0
+      "after": 1550,
+      "added": 1550
     },
     "hr": {
       "before": 0,
-      "after": 0,
-      "added": 0
+      "after": 1554,
+      "added": 1554
     },
     "si": {
       "before": 0,
-      "after": 0,
-      "added": 0
+      "after": 1555,
+      "added": 1555
     },
     "hu": {
       "before": 0,
-      "after": 0,
-      "added": 0
+      "after": 1560,
+      "added": 1560
     },
     "ro": {
       "before": 0,
-      "after": 0,
-      "added": 0
+      "after": 1560,
+      "added": 1560
     },
     "gr": {
       "before": 0,
-      "after": 0,
-      "added": 0
+      "after": 1557,
+      "added": 1557
     },
     "lu": {
-      "before": 0,
-      "after": 20,
-      "added": 20
+      "before": 20,
+      "after": 1566,
+      "added": 1546
     }
   }
 }

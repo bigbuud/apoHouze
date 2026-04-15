@@ -20178,6 +20178,8 @@ const MEDICINES = [
   { name: "Rivaxa 15 mg + 20 mg filmomhulde tabletten", generic: "RIVAROXABAN#RIVAROXABAN", category: "Anticoagulants", form: "Tablet", rx: true },
   { name: "Valdispert 45 mg, omhulde tabletten", generic: "VALERIANAE EXTRACTUM SICCUM (LN)", category: "Sleep & Sedation", form: "Tablet", rx: false },
 
+  { name: "Nitro \"Pohl\" Infus voor perfusorpompsystemen 1mg/ml, oplossing voor infusie", generic: "NITROGLYCERINE", category: "Heart & Blood Pressure", form: "Solution", rx: true },
+
 ];
 
 const CATEGORIES = [

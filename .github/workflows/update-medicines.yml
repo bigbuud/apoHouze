@@ -1,89 +1,98 @@
-name: 🔄 Update Medicine Databases
+# Voeg dit toe aan je bestaande .github/workflows/update-medicines.yml
+# onder de jobs sectie, OF voeg de nieuwe landen toe aan een bestaande matrix job
+
+# ============================================================
+# Optie A: Toevoegen aan bestaande matrix (aanbevolen)
+# ============================================================
+# Zoek in je huidige workflow naar iets als:
+#   matrix:
+#     country: [de, gb]
+# En breid uit naar:
+#   matrix:
+#     country: [de, gb, cz, sk, hr, si, hu, ro, gr, lu]
+
+# ============================================================
+# Optie B: Aparte job per land (als je geen matrix hebt)
+# ============================================================
+
+name: Update Medicines Data
 
 on:
-  # Elke 4 maanden: 1 januari, 1 mei, 1 september om 03:00 UTC
   schedule:
-    - cron: '0 3 1 1,5,9 *'
-  # Handmatig starten via Actions tab
-  workflow_dispatch:
-    inputs:
-      countries:
-        description: 'Landen: be nl de gb us ca fr it at ch dk es fi ie no pl pt se (of combinaties)'
-        required: false
-        default: 'be nl de gb us ca fr it at ch dk es fi ie no pl pt se'
-      dry_run:
-        description: 'Dry run (alleen preview, geen bestanden aanpassen)'
-        type: boolean
-        default: false
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    - cron: '0 3 * * 0'   # elke zondag om 03:00 UTC
+  workflow_dispatch:        # ook handmatig triggerable
 
 jobs:
-  update:
+  update-medicines:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
-    permissions:
-      contents: write
+    strategy:
+      fail-fast: false      # doorgaan als één land faalt
+      matrix:
+        country:
+          # Bestaand
+          - code: de
+            script: fetch_de.py
+            description: "Germany (EMA JSON)"
+          - code: gb
+            script: fetch_gb.py
+            description: "UK (NHSBSA CKAN)"
+          # Nieuw — Prioriteit 1
+          - code: cz
+            script: fetch_cz.py
+            description: "Czech Republic (SÚKL open data)"
+          - code: sk
+            script: fetch_sk.py
+            description: "Slovakia (ŠÚKL)"
+          - code: hr
+            script: fetch_hr.py
+            description: "Croatia (HALMED)"
+          - code: si
+            script: fetch_si.py
+            description: "Slovenia (JAZMP)"
+          - code: hu
+            script: fetch_hu.py
+            description: "Hungary (OGYÉI)"
+          - code: ro
+            script: fetch_ro.py
+            description: "Romania (ANMDMR)"
+          - code: gr
+            script: fetch_gr.py
+            description: "Greece (EOF)"
+          - code: lu
+            script: fetch_lu.py
+            description: "Luxembourg (SAM/Ministry)"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Setup Python (voor DE fetch script)
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Installeer Python dependencies (voor DE)
-        run: pip install openpyxl --quiet
-
-      - name: Installeer Node dependencies
-        run: npm install
-
-      - name: Update medicijndatabases
+      - name: Install dependencies
         run: |
-          COUNTRIES="${{ github.event.inputs.countries || 'be nl de gb us ca fr it at ch dk es fi ie no pl pt se' }}"
-          DRY="${{ github.event.inputs.dry_run || 'false' }}"
-          if [ "$DRY" = "true" ]; then
-            node update.js $COUNTRIES --dry-run
+          pip install requests openpyxl --break-system-packages 2>/dev/null || \
+          pip install requests openpyxl
+
+      - name: Run fetch script for ${{ matrix.country.description }}
+        run: |
+          python scripts/${{ matrix.country.script }}
+        continue-on-error: true   # log fout maar stop workflow niet
+
+      - name: Check output
+        run: |
+          if [ -f "data/medicines_${{ matrix.country.code }}.js" ]; then
+            echo "✅ ${{ matrix.country.code }}: $(wc -l < data/medicines_${{ matrix.country.code }}.js) lines"
           else
-            node update.js $COUNTRIES
+            echo "⚠️  ${{ matrix.country.code }}: geen output — check script en URL"
           fi
 
-      - name: Controleer op wijzigingen
-        id: changes
-        run: |
-          if git diff --quiet data/countries/ data/last-update.json 2>/dev/null; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "total=0" >> $GITHUB_OUTPUT
-          else
-            echo "changed=true" >> $GITHUB_OUTPUT
-            TOTAL=$(node -e "try{const l=require('./data/last-update.json');const t=Object.values(l.results||{}).reduce((s,r)=>s+(r.added||0),0);console.log(t)}catch(e){console.log(0)}")
-            echo "total=$TOTAL" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Commit & push bijgewerkte databases
-        if: steps.changes.outputs.changed == 'true' && github.event.inputs.dry_run != 'true'
-        run: |
-          git config user.name  "apoHouze Update Bot"
-          git config user.email "bot@apohouze.app"
-          git add data/countries/ data/last-update.json
-          git commit -m "🔄 Medicine update: +${{ steps.changes.outputs.total }} nieuwe medicijnen [automated]"
-          git push
-
-      - name: Trigger Docker rebuild
-        if: steps.changes.outputs.changed == 'true' && github.event.inputs.dry_run != 'true'
-        uses: benc-uk/workflow-dispatch@v1
+      - name: Commit updated data
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          workflow: docker-publish.yml
-          token: ${{ secrets.CR_PAT }}
-
-      - name: Geen wijzigingen
-        if: steps.changes.outputs.changed != 'true'
-        run: echo "✅ Databases zijn al up-to-date."
+          commit_message: "chore: update medicines data (${{ matrix.country.code }})"
+          file_pattern: "data/medicines_${{ matrix.country.code }}.js"
+          commit_user_name: "apoHouze Bot"
+          commit_user_email: "bot@apohoux.local"

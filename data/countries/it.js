@@ -8813,6 +8813,29 @@ const MEDICINES = [
 
   { name: "EMEA/H/C/005653", generic: "budesonide", category: "Lungs & Asthma", form: "Tablet", rx: false },
 
+  { name: "ACICLOVIR ZENTIVA", generic: "ACICLOVIR", category: "Antivirals", form: "Tablet", rx: false },
+  { name: "ATENOLOLO CLORTALIDONE RATIOPHARM", generic: "ATENOLOLO + CLORTALIDONE", category: "Heart & Blood Pressure", form: "Tablet", rx: false },
+  { name: "BECLOMETASONE E FORMOTEROLO ZENTIVA", generic: "BECLOMETASONE + FORMOTEROLO", category: "Lungs & Asthma", form: "Tablet", rx: false },
+  { name: "BECLOMETASONE + FORMOTEROLO", generic: "BECLOMETASONE + FORMOTEROLO", category: "Lungs & Asthma", form: "Tablet", rx: false },
+  { name: "BECLOMETASONE E FORMOTEROLO ZENTIVA ITALIA", generic: "BECLOMETASONE + FORMOTEROLO", category: "Lungs & Asthma", form: "Tablet", rx: false },
+  { name: "BICALUTAMIDE TECNIGEN", generic: "BICALUTAMIDE", category: "Oncology", form: "Tablet", rx: false },
+  { name: "BUPRENORFINA E NALOXONE G.L. PHARMA", generic: "BUPRENORFINA CLORIDRATO + NALOXONE CLORIDRATO DIIDRATO", category: "Nervous System", form: "Tablet", rx: false },
+  { name: "CALCITRIOLO TEVA", generic: "CALCITRIOLO", category: "Vitamins & Supplements", form: "Capsule", rx: false },
+  { name: "CARBOSSIMALTOSIO FERRICO SANDOZ", generic: "CARBOSSIMALTOSIO FERRICO", category: "Vitamins & Supplements", form: "Injection", rx: false },
+  { name: "DIAZEPAM AUROBINDO", generic: "DIAZEPAM", category: "Sleep & Sedation", form: "Tablet", rx: false },
+  { name: "DOTAGRAF", generic: "ACIDO GADOTERICO", category: "First Aid", form: "Tablet", rx: false },
+  { name: "EMTRICITABINA E TENOFOVIR DISOPROXIL TEVA", generic: "EMTRICITABINA + TENOFOVIR DISOPROXIL", category: "Antivirals", form: "Tablet", rx: false },
+  { name: "MACROGOL AUROBINDO", generic: "MACROGOL 4000", category: "Stomach & Intestine", form: "Tablet", rx: false },
+  { name: "MELATONINA ZENTIVA", generic: "MELATONINA", category: "Sleep & Sedation", form: "Tablet", rx: false },
+  { name: "MELATONINA", generic: "MELATONINA", category: "Sleep & Sedation", form: "Tablet", rx: false },
+  { name: "OLMESARTAN E  IDROCLOROTIAZIDE AUROBINDO", generic: "IDROCLOROTIAZIDE + OLMESARTAN MEDOXOMIL", category: "Heart & Blood Pressure", form: "Tablet", rx: false },
+  { name: "IDROCLOROTIAZIDE + OLMESARTAN MEDOXOMIL", generic: "IDROCLOROTIAZIDE + OLMESARTAN MEDOXOMIL", category: "Heart & Blood Pressure", form: "Tablet", rx: false },
+  { name: "OMKASA", generic: "ACIDO SALICILICO", category: "Eye & Ear", form: "Tablet", rx: false },
+  { name: "PANTOPRAZOLO TOWA", generic: "PANTOPRAZOLO", category: "Stomach & Intestine", form: "Tablet", rx: false },
+  { name: "PROTAMINA SOLFATO LEO PHARMA", generic: "PROTAMINA SOLFATO", category: "First Aid", form: "Injection", rx: false },
+  { name: "PROTAMINA SOLFATO", generic: "PROTAMINA SOLFATO", category: "First Aid", form: "Injection", rx: false },
+  { name: "TIKLID", generic: "TICLOPIDINA CLORIDRATO", category: "Anticoagulants", form: "Tablet", rx: false },
+
 ];
 
 const CATEGORIES = [

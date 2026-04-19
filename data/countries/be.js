@@ -12267,6 +12267,23 @@ const MEDICINES = [
   { name: "Sacubitril/Valsartan Teva 97 mg - 103 mg film-coat. tabl.", generic: "", category: "Heart & Blood Pressure", form: "Tablet", rx: false },
   { name: "Clindamycin Noridem 150 mg/ml inj./inf. sol. i.v./i.m. amp.", generic: "", category: "Antibiotics", form: "Injection", rx: false },
 
+  { name: "Iso-Betadine Tulle 10 % impr. dressing sachet", generic: "", category: "Skin & Wounds", form: "Tablet", rx: false },
+  { name: "Finasteride Teva  5 mg (Orifarm) film-coat. tabl.", generic: "", category: "Urology", form: "Tablet", rx: false },
+  { name: "Tadalafil Teva  20 mg (Orifarm) film-coat. tabl.", generic: "", category: "Urology", form: "Tablet", rx: false },
+  { name: "Alprazolam EG 0.5 mg (Exim Pharma) tabl.", generic: "", category: "Sleep & Sedation", form: "Tablet", rx: false },
+  { name: "Alprazolam EG  1 mg (Exim Pharma) tabl.", generic: "", category: "Sleep & Sedation", form: "Tablet", rx: false },
+  { name: "Sildenafil Viatris 100 mg (Orifarm) film-coat. tabl.", generic: "", category: "Urology", form: "Tablet", rx: false },
+  { name: "Rezurock 200 mg film-coat. tabl.", generic: "", category: "Corticosteroids", form: "Tablet", rx: false },
+  { name: "Supemtek inj. sol. i.m. pre-filled syr.", generic: "", category: "Antivirals", form: "Injection", rx: false },
+  { name: "Ondibta 100 U/ml inj. sol. s.c. pre-filled pen", generic: "", category: "Diabetes", form: "Injection", rx: false },
+  { name: "Fylrevy 14.2 mg film-coat. tabl.", generic: "", category: "Women's Health", form: "Tablet", rx: false },
+  { name: "Fylrevy 18.9 mg film-coat. tabl.", generic: "", category: "Women's Health", form: "Tablet", rx: false },
+  { name: "Kayshild 0.25 mg inj. sol. s.c. pre-filled pen", generic: "", category: "Diabetes", form: "Injection", rx: false },
+  { name: "Kayshild 0.5 mg inj. sol. s.c. pre-filled pen", generic: "", category: "Diabetes", form: "Injection", rx: false },
+  { name: "Kayshild 1 mg inj. sol. s.c. pre-filled pen", generic: "", category: "Diabetes", form: "Injection", rx: false },
+  { name: "Kayshild 1.7 mg inj. sol. s.c. pre-filled pen", generic: "", category: "Diabetes", form: "Injection", rx: false },
+  { name: "Kayshild 2.4 mg inj. sol. s.c. pre-filled pen", generic: "", category: "Diabetes", form: "Injection", rx: false },
+
 ];
 
 const CATEGORIES = [

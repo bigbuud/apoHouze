@@ -18425,6 +18425,24 @@ const MEDICINES = [
   { name: "Hemorrhoidal Cream with Lidocaine", generic: "Glycerol", category: "CREAM", form: "Tablet", rx: false },
   { name: "Glycerol", generic: "Phenylephine", category: "Pramoxine", form: "Tablet", rx: false },
 
+  { name: "Freskaro Povidone Iodine", generic: "Povidone Iodine 10%", category: "First Aid", form: "Tablet", rx: false },
+  { name: "Oxytocin Acetate", generic: "Oxytocin Acetate", category: "Women's Health", form: "Powder", rx: false },
+  { name: "RDVHDLW Extra Strength NAIL REPAIR PEN", generic: "Tolnaftate", category: "US", form: "Tablet", rx: false },
+  { name: "Crest Pro-Health Gum Restore Smooth Mint", generic: "Cetylpyridinium chloride", category: "First Aid", form: "Tablet", rx: false },
+  { name: "Goodmeds Allergy Relief Diphenhydramine HCl", generic: "DIPHENHYDRAMINE HYDROCHLORIDE", category: "Allergy", form: "Tablet", rx: false },
+  { name: "medicated", generic: "miconazole", category: "Antifungals", form: "Tablet", rx: false },
+  { name: "WERPEKA FUNGAL NAIL RENEWAL", generic: "Undecylenic acid 25% FUNGAL NAIL RENEWAL", category: "Antifungals", form: "Tablet", rx: false },
+  { name: "Neurocaine", generic: "Lidocaine", category: "First Aid", form: "Patch", rx: false },
+  { name: "Crest Pro-Health Nightly Bacteria Shield", generic: "Cetylpyridinium chloride", category: "First Aid", form: "Tablet", rx: false },
+  { name: "4oz", generic: "miconazole", category: "Antifungals", form: "Tablet", rx: false },
+  { name: "TOYKNIER MULTI-PURPOSE TREATMENT", generic: "Undecylenic Acid 25% MULTI-PURPOSE TREATMENT", category: "Antifungals", form: "Tablet", rx: false },
+  { name: "Undecylenic Acid 25% MULTI-PURPOSE TREATMENT", generic: "Undecylenic Acid 25% MULTI-PURPOSE TREATMENT", category: "Antifungals", form: "Tablet", rx: false },
+  { name: "Dr. Simi Pain Reliever PM", generic: "Acetaminophen", category: "US", form: "Tablet", rx: false },
+  { name: "CARBOXYMETHYLCELLULOSE SODIUM EYE LUBRICANT", generic: "CARBOXYMETHYLCELLULOSE SODIUM", category: "US", form: "Tablet", rx: false },
+  { name: "Rompe Pecho Max", generic: "Acetaminophen", category: "OTC", form: "Tablet", rx: false },
+  { name: "Crest Pro-Health Gum DetoxifyWinter Mint", generic: "Cetylpyridinium chloride", category: "First Aid", form: "Tablet", rx: false },
+  { name: "Dulaglutide Sodium Salt", generic: "Dulaglutide Sodium Salt", category: "Diabetes", form: "Powder", rx: false },
+
 ];
 
 const CATEGORIES = [
